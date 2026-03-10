@@ -1,10 +1,13 @@
+import { AnimateText } from "../components/ui/AnimateText";
+
 export function QuotePage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-display-hero font-semibold tracking-tighter text-primary">
-          Get a quote.
-        </h1>
+        <AnimateText
+          text="Get a quote."
+          className="text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-4 max-w-[480px] text-base text-primary/40">
           Tell us what you would like to insure and we will get back to you as soon as possible.
         </p>

@@ -15,14 +15,17 @@ function HouseFrame({ isMobile }: { isMobile: boolean }) {
   const groupRef = useRef<THREE.Group>(null!);
   const glowRef = useRef<THREE.Mesh>(null!);
 
-  useFrame((state, delta) => {
+  const timeRef = useRef(0);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.06;
     }
     // Pulsing inner glow
     if (glowRef.current) {
       const mat = glowRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.03 + Math.sin(state.clock.elapsedTime * 0.8) * 0.015;
+      mat.opacity = 0.03 + Math.sin(timeRef.current * 0.8) * 0.015;
     }
   });
 
@@ -178,7 +181,11 @@ export function HomePrism3D() {
       <Canvas
         camera={{ position: [0, 1.2, 4.5], fov: 40 }}
         style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile }}
+        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
+        dpr={[1, isMobile ? 1 : 1.5]}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
+        }}
       >
         <ambientLight intensity={0.2} />
         <HouseFrame isMobile={isMobile} />

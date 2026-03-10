@@ -144,7 +144,11 @@ export function CrystalGlobe() {
       <Canvas
         camera={{ position: [0, 0, 5.5], fov: 45 }}
         style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile }}
+        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
+        dpr={[1, isMobile ? 1 : 1.5]}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
+        }}
       >
         <ambientLight intensity={0.3} />
         <WireframeGlobe isMobile={isMobile} />

@@ -50,9 +50,11 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
   const line = useMemo(() => new THREE.Line(ringGeo, lineMat), [ringGeo, lineMat]);
 
   // Animate data nodes traveling along the ellipse
-  useFrame((state) => {
+  const timeRef = useRef(0);
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     if (!nodesRef.current) return;
-    const t = state.clock.elapsedTime * config.speed;
+    const t = timeRef.current * config.speed;
     nodesRef.current.children.forEach((child, i) => {
       const offset = (i / config.nodeCount) * Math.PI * 2;
       const angle = t + offset;
@@ -62,7 +64,7 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
         0,
       );
       // Pulse size
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 2 + i) * 0.3;
+      const scale = 1 + Math.sin(timeRef.current * 2 + i) * 0.3;
       child.scale.setScalar(scale);
     });
   });
@@ -89,13 +91,15 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
 
 function CentralCore({ isMobile }: { isMobile: boolean }) {
   const ref = useRef<THREE.Mesh>(null!);
+  const timeRef = useRef(0);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     if (ref.current) {
       ref.current.rotation.y += delta * 0.1;
       ref.current.rotation.x += delta * 0.05;
       const mat = ref.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.05 + Math.sin(state.clock.elapsedTime * 0.6) * 0.02;
+      mat.opacity = 0.05 + Math.sin(timeRef.current * 0.6) * 0.02;
     }
   });
 
@@ -145,7 +149,11 @@ export function DataOrbit3D() {
       <Canvas
         camera={{ position: [0, 1.5, 5.5], fov: 42 }}
         style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile }}
+        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
+        dpr={[1, isMobile ? 1 : 1.5]}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
+        }}
       >
         <ambientLight intensity={0.2} />
         <CentralCore isMobile={isMobile} />

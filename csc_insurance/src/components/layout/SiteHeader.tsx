@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { motion, LayoutGroup } from "framer-motion";
 import { useScrollPosition } from "../../hooks/useScrollPosition";
 import { navigation } from "../../theme.config";
 
@@ -10,36 +11,69 @@ export function SiteHeader() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "backdrop-blur-xl bg-canvas-bg/70 border-b border-border-light"
-          : "bg-transparent border-b border-transparent"
+        scrolled ? "backdrop-blur-xl bg-canvas-bg/70" : "bg-transparent"
       }`}
     >
+      {/* Flowing iridescent border — animated gradient replaces static border */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px transition-opacity duration-500"
+        style={{
+          opacity: scrolled ? 1 : 0,
+          background:
+            "linear-gradient(90deg, transparent 0%, rgba(123,111,224,0.25) 20%, rgba(167,139,250,0.5) 50%, rgba(96,165,250,0.25) 80%, transparent 100%)",
+          backgroundSize: "200% 100%",
+          animation: scrolled ? "shimmer-border 4s linear infinite" : "none",
+        }}
+      />
+
       <nav className="mx-auto flex h-[60px] max-w-[1120px] items-center justify-between px-6">
         {/* Logo */}
         <Link to="/" className="text-lg font-semibold tracking-tighter text-primary">
           CSC Insurance
         </Link>
 
-        {/* Desktop nav */}
-        <ul className="hidden items-center gap-8 md:flex">
-          {navigation.items.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `text-sm tracking-wide transition-colors duration-200 ${
-                    isActive
-                      ? "text-accent-trust font-medium"
-                      : "text-primary/60 hover:text-primary"
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+        {/* Desktop nav with capsule slider */}
+        <LayoutGroup>
+          <ul className="hidden items-center gap-1 md:flex">
+            {navigation.items.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  className="relative block px-4 py-1.5 text-sm tracking-wide"
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.span
+                          layoutId="nav-capsule"
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            background: "rgba(123, 111, 224, 0.08)",
+                            border: "1px solid rgba(123, 111, 224, 0.12)",
+                          }}
+                          transition={{
+                            type: "spring" as const,
+                            stiffness: 350,
+                            damping: 30,
+                          }}
+                        />
+                      )}
+                      <span
+                        className={`relative z-10 transition-colors duration-200 ${
+                          isActive
+                            ? "text-accent-trust font-medium"
+                            : "text-primary/60 hover:text-primary"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </LayoutGroup>
 
         {/* CTA */}
         <Link
@@ -76,7 +110,7 @@ export function SiteHeader() {
       {/* Mobile menu */}
       <div
         className={`overflow-hidden transition-all duration-400 ease-spring md:hidden ${
-          mobileOpen ? "max-h-[400px] border-b border-border-light" : "max-h-0"
+          mobileOpen ? "max-h-[400px]" : "max-h-0"
         }`}
       >
         <ul className="flex flex-col gap-1 bg-canvas-bg/95 px-6 pb-6 pt-2 backdrop-blur-xl">

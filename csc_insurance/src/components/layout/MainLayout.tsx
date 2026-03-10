@@ -1,23 +1,17 @@
-import { lazy, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { PageTransition } from "../ui/PageTransition";
-
-const NebulaBackground = lazy(() =>
-  import("../three/NebulaBackground").then((m) => ({ default: m.NebulaBackground })),
-);
+import { NebulaBackground } from "../three/NebulaBackground";
 
 export function MainLayout() {
   const location = useLocation();
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      {/* Ultra-subtle 3D nebula mesh gradient — fixed behind everything */}
-      <Suspense fallback={null}>
-        <NebulaBackground />
-      </Suspense>
+      {/* CSS nebula gradient — fixed behind everything */}
+      <NebulaBackground />
 
       {/* Skip to content — a11y */}
       <a

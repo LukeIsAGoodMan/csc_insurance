@@ -1,12 +1,14 @@
 import { GhostButton } from "../components/ui/GhostButton";
+import { AnimateText } from "../components/ui/AnimateText";
 
 export function AboutPage() {
   return (
     <article>
       <section className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary">
-          About us.
-        </h1>
+        <AnimateText
+          text="About us."
+          className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-6 max-w-[560px] text-base text-primary/45 leading-relaxed">
           Making insurance simple for every stage of your life.
         </p>

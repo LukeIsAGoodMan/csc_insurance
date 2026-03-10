@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { AnimateText } from "../components/ui/AnimateText";
 
 const paymentOptions = [
   {
@@ -25,9 +26,10 @@ export function PaymentPage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-display-hero font-semibold tracking-tighter text-primary">
-          Make a payment.
-        </h1>
+        <AnimateText
+          text="Make a payment."
+          className="text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-4 max-w-[480px] text-base text-primary/40">
           Choose the method that works best for you.
         </p>

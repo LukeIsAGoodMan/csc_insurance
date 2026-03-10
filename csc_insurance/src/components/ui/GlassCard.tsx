@@ -1,5 +1,5 @@
-import { useState, useRef, type ReactNode } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useCallback, type ReactNode } from "react";
+import { motion, useSpring, useMotionValue } from "framer-motion";
 
 interface GlassCardProps {
   children: ReactNode;
@@ -7,23 +7,34 @@ interface GlassCardProps {
 }
 
 /**
- * Glassmorphism 2.0 card with iridescent hover border.
+ * Glassmorphism 2.0 card with iridescent hover border + trailing light-dot.
  * - backdrop-blur(40px) + bg-white/10 + border-white/30
  * - Mouse-tracking gradient border on hover
+ * - Blue-purple light point that follows cursor with spring-based inertia
  */
 export function GlassCard({ children, className = "" }: GlassCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setMousePos({
-      x: (e.clientX - rect.left) / rect.width,
-      y: (e.clientY - rect.top) / rect.height,
-    });
-  };
+  // Spring-lagged dot position (pixels relative to card)
+  const dotX = useMotionValue(0);
+  const dotY = useMotionValue(0);
+  const springX = useSpring(dotX, { stiffness: 120, damping: 18, mass: 0.8 });
+  const springY = useSpring(dotY, { stiffness: 120, damping: 18, mass: 0.8 });
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      setMousePos({ x, y });
+      dotX.set(e.clientX - rect.left);
+      dotY.set(e.clientY - rect.top);
+    },
+    [dotX, dotY],
+  );
 
   // Iridescent gradient angle follows mouse position
   const angle = Math.atan2(mousePos.y - 0.5, mousePos.x - 0.5) * (180 / Math.PI) + 180;
@@ -69,6 +80,25 @@ export function GlassCard({ children, className = "" }: GlassCardProps) {
         style={{
           opacity: isHovered ? 0 : 1,
           border: "1px solid rgba(255, 255, 255, 0.2)",
+        }}
+      />
+
+      {/* Trailing light-dot with spring physics */}
+      <motion.div
+        className="pointer-events-none absolute z-20"
+        style={{
+          x: springX,
+          y: springY,
+          width: 80,
+          height: 80,
+          marginLeft: -40,
+          marginTop: -40,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(96, 165, 250, 0.3) 40%, transparent 70%)",
+          opacity: isHovered ? 1 : 0,
+          transition: "opacity 0.4s ease",
+          filter: "blur(8px)",
         }}
       />
 

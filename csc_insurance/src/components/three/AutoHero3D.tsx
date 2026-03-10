@@ -14,15 +14,17 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 function ShieldCore({ isMobile }: { isMobile: boolean }) {
   const groupRef = useRef<THREE.Group>(null!);
   const coreRef = useRef<THREE.Mesh>(null!);
+  const timeRef = useRef(0);
   const segments = isMobile ? 24 : 48;
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.05;
     }
     if (coreRef.current) {
       const mat = coreRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.06 + Math.sin(state.clock.elapsedTime * 1.2) * 0.03;
+      mat.opacity = 0.06 + Math.sin(timeRef.current * 1.2) * 0.03;
       coreRef.current.rotation.x += delta * 0.15;
       coreRef.current.rotation.z += delta * 0.1;
     }
@@ -151,7 +153,11 @@ export function AutoHero3D() {
       <Canvas
         camera={{ position: [0, 0, 5.5], fov: 42 }}
         style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile }}
+        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
+        dpr={[1, isMobile ? 1 : 1.5]}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
+        }}
       >
         <ambientLight intensity={0.2} />
         <ShieldCore isMobile={isMobile} />

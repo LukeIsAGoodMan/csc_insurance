@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { Rollup } from "../components/ui/Rollup";
+import { AnimateText } from "../components/ui/AnimateText";
 
 const CrystalGlobe = lazy(() =>
   import("../components/three/CrystalGlobe").then((m) => ({ default: m.CrystalGlobe })),
@@ -27,14 +28,11 @@ export function TravelInsurancePage() {
 
         {/* Text overlay */}
         <div className="relative z-10 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+          <AnimateText
+            text="Travel insurance."
             className="text-display-hero font-semibold tracking-tighter text-primary"
-          >
-            Travel insurance.
-          </motion.h1>
+            delay={0.4}
+          />
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}

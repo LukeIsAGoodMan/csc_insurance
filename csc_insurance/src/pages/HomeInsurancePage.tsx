@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { Rollup } from "../components/ui/Rollup";
+import { AnimateText } from "../components/ui/AnimateText";
 
 const HomePrism3D = lazy(() =>
   import("../components/three/HomePrism3D").then((m) => ({ default: m.HomePrism3D })),
@@ -21,14 +22,11 @@ export function HomeInsurancePage() {
         </div>
 
         <div className="relative z-10 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          <AnimateText
+            text="Property insurance."
             className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary"
-          >
-            Property insurance.
-          </motion.h1>
+            delay={0.3}
+          />
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

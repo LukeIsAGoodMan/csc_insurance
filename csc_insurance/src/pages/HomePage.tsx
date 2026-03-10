@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { GhostButton } from "../components/ui/GhostButton";
+import { AnimateText } from "../components/ui/AnimateText";
 
 const services = [
   { label: "Auto", path: "/auto-insurance", desc: "Car insurance coverage for Ontario drivers." },
@@ -19,9 +20,10 @@ export function HomePage() {
     <article>
       {/* ── Hero ── */}
       <section className="flex min-h-[85vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary">
-          Get the insurance coverage you need at the best price.
-        </h1>
+        <AnimateText
+          text="Get the insurance coverage you need at the best price."
+          className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <GhostButton to="/get-a-quote" variant="primary">
             Get Started

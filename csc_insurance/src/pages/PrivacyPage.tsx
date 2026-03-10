@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { Rollup } from "../components/ui/Rollup";
+import { AnimateText } from "../components/ui/AnimateText";
 import {
   LegalGlassContainer,
   LegalSection,
@@ -9,14 +9,10 @@ export function PrivacyPage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
+        <AnimateText
+          text="Privacy policy."
           className="text-display-hero font-semibold tracking-tighter text-primary"
-        >
-          Privacy policy.
-        </motion.h1>
+        />
       </section>
 
       <LegalGlassContainer>

@@ -1,10 +1,13 @@
+import { AnimateText } from "../components/ui/AnimateText";
+
 export function ContactPage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-display-hero font-semibold tracking-tighter text-primary">
-          Get in touch.
-        </h1>
+        <AnimateText
+          text="Get in touch."
+          className="text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-4 max-w-[480px] text-base text-primary/40">
           Give us a call or fill out the form below and we will get back to you as soon as possible.
         </p>

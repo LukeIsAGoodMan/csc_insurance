@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
 import { Rollup } from "../components/ui/Rollup";
+import { AnimateText } from "../components/ui/AnimateText";
+import { NumberTicker } from "../components/ui/NumberTicker";
 import {
   LegalGlassContainer,
   LegalSection,
@@ -9,14 +10,10 @@ export function DisclosurePage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
+        <AnimateText
+          text="Disclosure statement."
           className="text-display-hero font-semibold tracking-tighter text-primary"
-        >
-          Disclosure statement.
-        </motion.h1>
+        />
       </section>
 
       <LegalGlassContainer>
@@ -24,8 +21,11 @@ export function DisclosurePage() {
           <Rollup title="Broker commissions" defaultOpen>
             <p>
               CSC Insurance earns commission from the insurance companies we represent. Commission
-              rates vary by product line: auto insurance commissions typically range from 5% to
-              12.5%, and property insurance commissions range from 12.5% to 20%.
+              rates vary by product line: auto insurance commissions typically range
+              from <NumberTicker value={5} decimals={0} suffix="%" /> to{" "}
+              <NumberTicker value={12.5} suffix="%" />, and property insurance commissions range
+              from <NumberTicker value={12.5} suffix="%" /> to{" "}
+              <NumberTicker value={20} decimals={0} suffix="%" />.
             </p>
           </Rollup>
         </LegalSection>

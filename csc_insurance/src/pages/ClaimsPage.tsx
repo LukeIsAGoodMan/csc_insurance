@@ -1,3 +1,5 @@
+import { AnimateText } from "../components/ui/AnimateText";
+
 const claimLines = [
   { carrier: "Aviva", phone: "1-866-692-8482", url: "https://www.aviva.ca/en/claims/" },
   { carrier: "CAA Insurance", phone: "1-800-222-4357", url: "https://www.caainsurance.com/claims" },
@@ -17,9 +19,10 @@ export function ClaimsPage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-display-hero font-semibold tracking-tighter text-primary">
-          After hours claims.
-        </h1>
+        <AnimateText
+          text="After hours claims."
+          className="text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-4 max-w-[520px] text-base text-primary/40">
           Need to file a claim outside of business hours? Contact your insurer directly.
         </p>

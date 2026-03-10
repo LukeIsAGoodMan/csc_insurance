@@ -1,3 +1,5 @@
+import { AnimateText } from "../components/ui/AnimateText";
+
 const carriers = [
   { name: "Aviva", url: "https://www.aviva.ca" },
   { name: "CAA Insurance", url: "https://www.caainsurance.com" },
@@ -18,9 +20,10 @@ export function PayDirectPage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-display-hero font-semibold tracking-tighter text-primary">
-          Pay direct.
-        </h1>
+        <AnimateText
+          text="Pay direct."
+          className="text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-4 max-w-[520px] text-base text-primary/40">
           Pay your insurance company directly through their online portal.
         </p>

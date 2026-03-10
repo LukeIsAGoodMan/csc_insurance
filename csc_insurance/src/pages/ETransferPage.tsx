@@ -1,12 +1,14 @@
 import { Rollup } from "../components/ui/Rollup";
+import { AnimateText } from "../components/ui/AnimateText";
 
 export function ETransferPage() {
   return (
     <article>
       <section className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-display-hero font-semibold tracking-tighter text-primary">
-          Send an e-transfer.
-        </h1>
+        <AnimateText
+          text="Send an e-transfer."
+          className="text-display-hero font-semibold tracking-tighter text-primary"
+        />
         <p className="mt-4 max-w-[520px] text-base text-primary/40">
           Follow the instructions below to pay your CSC Insurance invoice via Interac e-Transfer.
         </p>
