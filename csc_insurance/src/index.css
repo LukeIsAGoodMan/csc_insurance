@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-canvas-bg text-primary font-sans;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+  }
+
+  ::selection {
+    background: rgba(29, 60, 52, 0.12);
+  }
+}
