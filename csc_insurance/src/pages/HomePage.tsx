@@ -38,7 +38,7 @@ export function HomePage() {
             <Link
               key={s.path}
               to={s.path}
-              className="group flex flex-col justify-between bg-canvas-bg p-10 transition-colors first:rounded-tl-2xl last:rounded-br-2xl hover:bg-white"
+              className="group flex flex-col justify-between bg-white/5 p-10 backdrop-blur-sm transition-colors first:rounded-tl-2xl last:rounded-br-2xl hover:bg-white/15"
             >
               <h2 className="text-xl font-semibold tracking-tight">{s.label}</h2>
               <p className="mt-3 text-sm text-primary/40 leading-relaxed">{s.desc}</p>

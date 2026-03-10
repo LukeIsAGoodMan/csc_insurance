@@ -40,19 +40,19 @@ export function NebulaBackground() {
       <div
         className="nebula-blob nebula-blob-1"
         style={{
-          background: `radial-gradient(circle, rgba(${toRgb(col1)}, 0.12) 0%, rgba(${toRgb(col1)}, 0.04) 40%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(${toRgb(col1)}, 0.18) 0%, rgba(${toRgb(col1)}, 0.06) 40%, transparent 70%)`,
         }}
       />
       <div
         className="nebula-blob nebula-blob-2"
         style={{
-          background: `radial-gradient(circle, rgba(${toRgb(col2)}, 0.10) 0%, rgba(${toRgb(col2)}, 0.03) 40%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(${toRgb(col2)}, 0.14) 0%, rgba(${toRgb(col2)}, 0.05) 40%, transparent 70%)`,
         }}
       />
       <div
         className="nebula-blob nebula-blob-3"
         style={{
-          background: `radial-gradient(circle, rgba(${toRgb(col3)}, 0.09) 0%, rgba(${toRgb(col3)}, 0.03) 40%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(${toRgb(col3)}, 0.12) 0%, rgba(${toRgb(col3)}, 0.04) 40%, transparent 70%)`,
         }}
       />
     </div>

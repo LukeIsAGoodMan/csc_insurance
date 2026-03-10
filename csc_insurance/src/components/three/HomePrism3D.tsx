@@ -152,7 +152,6 @@ function Particles({ count }: { count: number }) {
 export function HomeScene({ isMobile }: { isMobile: boolean }) {
   return (
     <>
-      <ambientLight intensity={0.2} />
       <HouseFrame isMobile={isMobile} />
       <Particles count={isMobile ? 80 : 150} />
     </>

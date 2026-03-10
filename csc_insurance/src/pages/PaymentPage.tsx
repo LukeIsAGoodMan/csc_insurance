@@ -38,7 +38,7 @@ export function PaymentPage() {
       <section className="mx-auto grid max-w-[1120px] gap-px rounded-2xl border border-border-light bg-border-light px-0 md:grid-cols-3">
         {paymentOptions.map((opt) => {
           const inner = (
-            <div className="flex h-full flex-col justify-between bg-canvas-bg p-8 transition-colors hover:bg-white">
+            <div className="flex h-full flex-col justify-between bg-white/5 p-8 backdrop-blur-sm transition-colors hover:bg-white/15">
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">{opt.title}</h2>
                 <p className="mt-2 text-sm text-primary/40 leading-relaxed">{opt.desc}</p>

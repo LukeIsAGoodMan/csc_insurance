@@ -133,7 +133,6 @@ function Particles({ count }: { count: number }) {
 export function TravelScene({ isMobile }: { isMobile: boolean }) {
   return (
     <>
-      <ambientLight intensity={0.3} />
       <WireframeGlobe isMobile={isMobile} />
       <Particles count={isMobile ? 80 : 200} />
     </>

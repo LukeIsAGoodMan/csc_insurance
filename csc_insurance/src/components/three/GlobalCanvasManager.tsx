@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useLocation } from "react-router-dom";
@@ -11,10 +11,13 @@ import { TravelScene } from "./CrystalGlobe";
 
 /* ────────────────────────────────────────────────────────────
    GlobalCanvasManager — Singleton WebGL Canvas.
-   ONE Canvas lives permanently in MainLayout.
-   Scene content switches based on the active route.
-   Geometry + material disposal on every scene transition.
-   After 3 context-loss events → static gradient fallback.
+
+   Architecture:
+   ✅ ONE Canvas, permanently mounted in MainLayout
+   ✅ DOM-level fade transition: fadeOut → swap scene → fadeIn
+   ✅ DisposableGroup: geometry + material + texture + RT disposal
+   ✅ SceneGuard: useFrame wipe when no product page active
+   ✅ 3 context losses → static gradient fallback
    ──────────────────────────────────────────────────────────── */
 
 /* ── Suppress THREE.Clock deprecation (R3F creates it internally) ── */
@@ -40,10 +43,9 @@ const CAM: Record<string, { pos: [number, number, number]; fov: number }> = {
   travel: { pos: [0, 0, 5.5], fov: 45 },
 };
 
-/* ── Camera controller — adjusts position + fov per scene ── */
+/* ── Camera controller ── */
 function SceneCamera({ scene }: { scene: string }) {
   const { camera } = useThree();
-
   useEffect(() => {
     const cfg = CAM[scene];
     if (!cfg) return;
@@ -52,46 +54,95 @@ function SceneCamera({ scene }: { scene: string }) {
     pCam.fov = cfg.fov;
     pCam.updateProjectionMatrix();
   }, [scene, camera]);
-
   return null;
 }
 
-/* ── Disposal wrapper — frees all GPU resources on unmount ── */
+/* ── Nuclear disposal — geometry + material + texture + renderTarget ── */
+function nuclearDispose(group: THREE.Object3D) {
+  group.traverse((child) => {
+    // Geometry
+    if ("geometry" in child && child.geometry) {
+      (child.geometry as THREE.BufferGeometry).dispose();
+    }
+
+    // Material(s)
+    if ("material" in child && child.material) {
+      const mats = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+      for (const mat of mats as THREE.Material[]) {
+        // Dispose every texture property on the material
+        for (const key of Object.keys(mat)) {
+          const val = (mat as unknown as Record<string, unknown>)[key];
+          if (val instanceof THREE.Texture) val.dispose();
+        }
+        mat.dispose();
+      }
+    }
+
+    // Render targets
+    if ("renderTarget" in child) {
+      const rt = (child as Record<string, unknown>).renderTarget;
+      if (rt instanceof THREE.WebGLRenderTarget) rt.dispose();
+    }
+  });
+}
+
+/* ── Disposal wrapper — keyed to force unmount/remount on scene change ── */
 function DisposableGroup({ children }: { children: React.ReactNode }) {
   const ref = useRef<THREE.Group>(null!);
 
   useEffect(() => {
     const group = ref.current;
     return () => {
-      group?.traverse((child) => {
-        const obj = child as THREE.Mesh;
-        if (obj.geometry && typeof obj.geometry.dispose === "function") {
-          obj.geometry.dispose();
-        }
-        if (obj.material) {
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((m) => m.dispose());
-          } else if (typeof (obj.material as THREE.Material).dispose === "function") {
-            (obj.material as THREE.Material).dispose();
-          }
-        }
-      });
+      if (group) nuclearDispose(group);
     };
   }, []);
 
   return <group ref={ref}>{children}</group>;
 }
 
-/* ── Scene renderer — key forces full unmount/remount on switch ── */
-function SceneContent({ scene, isMobile }: { scene: string; isMobile: boolean }) {
-  return (
-    <DisposableGroup>
-      {scene === "auto" && <AutoScene isMobile={isMobile} />}
-      {scene === "home" && <HomeScene isMobile={isMobile} />}
-      {scene === "business" && <BusinessScene isMobile={isMobile} />}
-      {scene === "travel" && <TravelScene isMobile={isMobile} />}
-    </DisposableGroup>
-  );
+/* ── Scene guard — wipes lingering GPU objects when no scene is active ── */
+function SceneGuard({ active }: { active: boolean }) {
+  const { scene } = useThree();
+  const wasActive = useRef(active);
+
+  useFrame(() => {
+    if (wasActive.current && !active) {
+      // Just left a product page — sweep the scene
+      scene.traverse((child) => {
+        if (
+          child instanceof THREE.Mesh ||
+          child instanceof THREE.Line ||
+          child instanceof THREE.Points
+        ) {
+          child.geometry?.dispose();
+          const mat = child.material;
+          if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+          else if (mat) (mat as THREE.Material).dispose();
+        }
+      });
+    }
+    wasActive.current = active;
+  });
+
+  return null;
+}
+
+/* ── Exclusive scene renderer — only ONE scene at a time ── */
+function ActiveScene({ scene, isMobile }: { scene: string; isMobile: boolean }) {
+  switch (scene) {
+    case "auto":
+      return <AutoScene isMobile={isMobile} />;
+    case "home":
+      return <HomeScene isMobile={isMobile} />;
+    case "business":
+      return <BusinessScene isMobile={isMobile} />;
+    case "travel":
+      return <TravelScene isMobile={isMobile} />;
+    default:
+      return null;
+  }
 }
 
 /* ── Main singleton Canvas ── */
@@ -100,11 +151,37 @@ export function GlobalCanvasManager() {
   const isMobile = useIsMobile();
   const [ctxLost, setCtxLost] = useState(0);
 
-  const activeScene = SCENE_MAP[pathname] ?? null;
+  /* ── Scene transition state machine ── */
+  const targetScene = SCENE_MAP[pathname] ?? null;
+  const [displayScene, setDisplayScene] = useState<string | null>(targetScene);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    // Same scene (or both null) — ensure not stuck in fading state
+    if (targetScene === displayScene) {
+      setFading(false);
+      return;
+    }
+
+    // Phase 1: fade container to opacity 0
+    setFading(true);
+
+    // Phase 2: after fade-out, swap scene while invisible
+    const id = setTimeout(() => {
+      setDisplayScene(targetScene);
+      // Phase 3: fade back in on next frame (after React mounts new scene)
+      requestAnimationFrame(() => setFading(false));
+    }, 500);
+
+    return () => clearTimeout(id);
+  }, [targetScene, displayScene]);
+
+  /* Container opacity: 0 during fade, 0.7 when scene active, 0 when no scene */
+  const containerOpacity = fading ? 0 : displayScene ? 0.7 : 0;
   const fallback = ctxLost >= 3;
 
-  /* After 3 context losses → static gradient, no more WebGL */
-  if (fallback && activeScene) {
+  /* After 3 context losses → static gradient, no WebGL */
+  if (fallback && displayScene) {
     return (
       <div className="pointer-events-none fixed inset-0 z-[1]">
         <div className="h-full w-full bg-gradient-to-br from-indigo-950/20 via-transparent to-violet-950/10" />
@@ -116,9 +193,9 @@ export function GlobalCanvasManager() {
     <div
       className="fixed inset-0 z-[1]"
       style={{
-        opacity: activeScene ? 0.7 : 0,
-        pointerEvents: activeScene ? "auto" : "none",
-        transition: "opacity 0.8s ease",
+        opacity: containerOpacity,
+        pointerEvents: displayScene ? "auto" : "none",
+        transition: "opacity 0.5s ease",
       }}
     >
       <Canvas
@@ -131,17 +208,19 @@ export function GlobalCanvasManager() {
             e.preventDefault();
             setCtxLost((n) => n + 1);
           });
-          gl.domElement.addEventListener("webglcontextrestored", () => {
-            /* R3F re-initializes internally after preventDefault */
-          });
         }}
       >
-        {activeScene && (
+        <SceneGuard active={!!displayScene} />
+
+        {displayScene && (
           <>
-            <SceneCamera scene={activeScene} />
-            <SceneContent key={activeScene} scene={activeScene} isMobile={isMobile} />
+            <SceneCamera scene={displayScene} />
+            <ambientLight intensity={displayScene === "travel" ? 0.3 : 0.2} />
+            <DisposableGroup key={displayScene}>
+              <ActiveScene scene={displayScene} isMobile={isMobile} />
+            </DisposableGroup>
             <OrbitControls
-              key={activeScene}
+              key={displayScene}
               enableZoom={false}
               enablePan={false}
               rotateSpeed={0.35}

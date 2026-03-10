@@ -132,7 +132,6 @@ function Particles({ count }: { count: number }) {
 export function BusinessScene({ isMobile }: { isMobile: boolean }) {
   return (
     <>
-      <ambientLight intensity={0.2} />
       <CentralCore isMobile={isMobile} />
       {orbits.map((cfg, i) => (
         <OrbitalRing key={i} config={cfg} isMobile={isMobile} />

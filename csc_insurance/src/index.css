@@ -15,7 +15,7 @@
   }
 
   body {
-    @apply bg-canvas-bg text-primary font-sans;
+    @apply bg-transparent text-primary font-sans;
     font-size: 1.0625rem;
     line-height: 1.65;
   }
