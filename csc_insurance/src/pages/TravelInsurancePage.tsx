@@ -1,12 +1,7 @@
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { Rollup } from "../components/ui/Rollup";
 import { AnimateText } from "../components/ui/AnimateText";
-
-const CrystalGlobe = lazy(() =>
-  import("../components/three/CrystalGlobe").then((m) => ({ default: m.CrystalGlobe })),
-);
 
 /**
  * Travel Insurance — "The Crystal Globe"
@@ -15,18 +10,8 @@ const CrystalGlobe = lazy(() =>
 export function TravelInsurancePage() {
   return (
     <article>
-      {/* ── Hero with 3D Globe ── */}
+      {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
       <section className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-6">
-        {/* Globe sits behind text */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-80">
-          <div className="w-full max-w-[700px]">
-            <Suspense fallback={null}>
-              <CrystalGlobe />
-            </Suspense>
-          </div>
-        </div>
-
-        {/* Text overlay */}
         <div className="relative z-10 text-center">
           <AnimateText
             text="Travel insurance."

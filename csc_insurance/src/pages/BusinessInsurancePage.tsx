@@ -1,26 +1,13 @@
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { Rollup } from "../components/ui/Rollup";
 import { AnimateText } from "../components/ui/AnimateText";
 
-const DataOrbit3D = lazy(() =>
-  import("../components/three/DataOrbit3D").then((m) => ({ default: m.DataOrbit3D })),
-);
-
 export function BusinessInsurancePage() {
   return (
     <article>
-      {/* ── Hero with 3D Orbit ── */}
+      {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
       <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6">
-        <div className="absolute inset-0 flex items-center justify-center opacity-70">
-          <div className="w-full max-w-[600px]">
-            <Suspense fallback={null}>
-              <DataOrbit3D />
-            </Suspense>
-          </div>
-        </div>
-
         <div className="relative z-10 text-center">
           <AnimateText
             text="Business insurance."

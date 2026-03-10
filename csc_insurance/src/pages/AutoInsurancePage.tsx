@@ -1,13 +1,8 @@
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { GlassCard } from "../components/ui/GlassCard";
 import { Rollup } from "../components/ui/Rollup";
 import { AnimateText } from "../components/ui/AnimateText";
-
-const AutoHero3D = lazy(() =>
-  import("../components/three/AutoHero3D").then((m) => ({ default: m.AutoHero3D })),
-);
 
 const sellingPoints = [
   {
@@ -46,16 +41,8 @@ const cardVariants = {
 export function AutoInsurancePage() {
   return (
     <article>
-      {/* ── Hero with 3D Shield ── */}
+      {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
       <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6">
-        <div className="absolute inset-0 flex items-center justify-center opacity-70">
-          <div className="w-full max-w-[600px]">
-            <Suspense fallback={null}>
-              <AutoHero3D />
-            </Suspense>
-          </div>
-        </div>
-
         <div className="relative z-10 text-center">
           <AnimateText
             text="Auto insurance."

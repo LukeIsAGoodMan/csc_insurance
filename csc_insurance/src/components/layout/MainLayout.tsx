@@ -4,6 +4,7 @@ import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { PageTransition } from "../ui/PageTransition";
 import { NebulaBackground } from "../three/NebulaBackground";
+import { GlobalCanvasManager } from "../three/GlobalCanvasManager";
 
 export function MainLayout() {
   const location = useLocation();
@@ -12,6 +13,9 @@ export function MainLayout() {
     <div className="relative flex min-h-screen flex-col">
       {/* CSS nebula gradient — fixed behind everything */}
       <NebulaBackground />
+
+      {/* Singleton WebGL Canvas — one context for all 3D scenes */}
+      <GlobalCanvasManager />
 
       {/* Skip to content — a11y */}
       <a

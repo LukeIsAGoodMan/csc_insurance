@@ -1,14 +1,12 @@
 import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { motion } from "framer-motion";
-import { useIsMobile } from "../../hooks/useIsMobile";
 
 /* ────────────────────────────────────────────────────────────
-   DataOrbit3D — Flowing orbital rings with luminous data nodes.
+   BusinessScene — Flowing orbital rings with luminous data nodes.
    Multiple elliptical orbits with traveling "data packets"
    (small spheres with trailing glow).
+   Pure scene content — rendered inside GlobalCanvasManager.
    ──────────────────────────────────────────────────────────── */
 
 interface OrbitConfig {
@@ -32,7 +30,6 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
   const nodesRef = useRef<THREE.Group>(null!);
   const segments = isMobile ? 48 : 96;
 
-  // Build elliptical path
   const ringGeo = useMemo(() => {
     const points: THREE.Vector3[] = [];
     for (let i = 0; i <= segments; i++) {
@@ -49,7 +46,6 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
 
   const line = useMemo(() => new THREE.Line(ringGeo, lineMat), [ringGeo, lineMat]);
 
-  // Animate data nodes traveling along the ellipse
   const timeRef = useRef(0);
   useFrame((_, delta) => {
     timeRef.current += delta;
@@ -63,7 +59,6 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
         config.ry * Math.sin(angle),
         0,
       );
-      // Pulse size
       const scale = 1 + Math.sin(timeRef.current * 2 + i) * 0.3;
       child.scale.setScalar(scale);
     });
@@ -73,10 +68,7 @@ function OrbitalRing({ config, isMobile }: { config: OrbitConfig; isMobile: bool
 
   return (
     <group ref={groupRef} rotation={config.tilt}>
-      {/* Orbit path */}
       <primitive object={line} />
-
-      {/* Traveling data nodes */}
       <group ref={nodesRef}>
         {Array.from({ length: nodeCount }, (_, i) => (
           <mesh key={i}>
@@ -137,32 +129,15 @@ function Particles({ count }: { count: number }) {
   );
 }
 
-export function DataOrbit3D() {
-  const isMobile = useIsMobile();
+export function BusinessScene({ isMobile }: { isMobile: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="h-[380px] w-full md:h-[480px]"
-    >
-      <Canvas
-        camera={{ position: [0, 1.5, 5.5], fov: 42 }}
-        style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
-        dpr={[1, isMobile ? 1 : 1.5]}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
-        }}
-      >
-        <ambientLight intensity={0.2} />
-        <CentralCore isMobile={isMobile} />
-        {orbits.map((cfg, i) => (
-          <OrbitalRing key={i} config={cfg} isMobile={isMobile} />
-        ))}
-        <Particles count={isMobile ? 60 : 120} />
-        <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.3} />
-      </Canvas>
-    </motion.div>
+    <>
+      <ambientLight intensity={0.2} />
+      <CentralCore isMobile={isMobile} />
+      {orbits.map((cfg, i) => (
+        <OrbitalRing key={i} config={cfg} isMobile={isMobile} />
+      ))}
+      <Particles count={isMobile ? 60 : 120} />
+    </>
   );
 }

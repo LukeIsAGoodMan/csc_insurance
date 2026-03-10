@@ -1,14 +1,12 @@
 import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { motion } from "framer-motion";
-import { useIsMobile } from "../../hooks/useIsMobile";
 
 /* ────────────────────────────────────────────────────────────
-   Wireframe Sphere — glowing latitude/longitude lines
-   Mobile: halved segments + particles
+   TravelScene — Wireframe globe with glowing latitude/longitude.
+   Pure scene content — rendered inside GlobalCanvasManager.
    ──────────────────────────────────────────────────────────── */
+
 function WireframeGlobe({ isMobile }: { isMobile: boolean }) {
   const groupRef = useRef<THREE.Group>(null!);
 
@@ -132,29 +130,12 @@ function Particles({ count }: { count: number }) {
   );
 }
 
-export function CrystalGlobe() {
-  const isMobile = useIsMobile();
+export function TravelScene({ isMobile }: { isMobile: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="h-[420px] w-full md:h-[520px]"
-    >
-      <Canvas
-        camera={{ position: [0, 0, 5.5], fov: 45 }}
-        style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
-        dpr={[1, isMobile ? 1 : 1.5]}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
-        }}
-      >
-        <ambientLight intensity={0.3} />
-        <WireframeGlobe isMobile={isMobile} />
-        <Particles count={isMobile ? 80 : 200} />
-        <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.4} autoRotate={false} />
-      </Canvas>
-    </motion.div>
+    <>
+      <ambientLight intensity={0.3} />
+      <WireframeGlobe isMobile={isMobile} />
+      <Particles count={isMobile ? 80 : 200} />
+    </>
   );
 }

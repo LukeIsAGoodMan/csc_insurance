@@ -1,14 +1,12 @@
 import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { motion } from "framer-motion";
-import { useIsMobile } from "../../hooks/useIsMobile";
 
 /* ────────────────────────────────────────────────────────────
-   AutoHero3D — Energy shield / glowing core.
-   A pulsing inner icosahedron core surrounded by concentric
-   shield rings rotating at different speeds.
+   AutoScene — Energy shield / glowing core.
+   Pulsing inner icosahedron surrounded by concentric shield
+   rings rotating at different speeds.
+   Pure scene content — rendered inside GlobalCanvasManager.
    ──────────────────────────────────────────────────────────── */
 
 function ShieldCore({ isMobile }: { isMobile: boolean }) {
@@ -39,7 +37,6 @@ function ShieldCore({ isMobile }: { isMobile: boolean }) {
     [],
   );
 
-  // Generate shield rings at different tilts
   const rings = useMemo(() => {
     const result: { geo: THREE.BufferGeometry; tilt: [number, number, number]; speed: number }[] = [];
     const ringSegments = isMobile ? 48 : 96;
@@ -70,19 +67,16 @@ function ShieldCore({ isMobile }: { isMobile: boolean }) {
 
   return (
     <group ref={groupRef}>
-      {/* Inner icosahedron core */}
       <mesh ref={coreRef}>
         <icosahedronGeometry args={[0.9, isMobile ? 0 : 1]} />
         <meshBasicMaterial color="#7B6FE0" transparent opacity={0.06} wireframe />
       </mesh>
 
-      {/* Core glow sphere */}
       <mesh>
         <sphereGeometry args={[0.7, segments, segments]} />
         <meshBasicMaterial color="#A78BFA" transparent opacity={0.04} />
       </mesh>
 
-      {/* Shield rings */}
       {rings.map((ring, i) => {
         const line = new THREE.Line(ring.geo, i === 0 ? ringMaterial : ringAccent);
         return (
@@ -141,29 +135,12 @@ function Particles({ count }: { count: number }) {
   );
 }
 
-export function AutoHero3D() {
-  const isMobile = useIsMobile();
+export function AutoScene({ isMobile }: { isMobile: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="h-[380px] w-full md:h-[480px]"
-    >
-      <Canvas
-        camera={{ position: [0, 0, 5.5], fov: 42 }}
-        style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
-        dpr={[1, isMobile ? 1 : 1.5]}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener("webglcontextlost", (e) => e.preventDefault());
-        }}
-      >
-        <ambientLight intensity={0.2} />
-        <ShieldCore isMobile={isMobile} />
-        <Particles count={isMobile ? 80 : 160} />
-        <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.35} />
-      </Canvas>
-    </motion.div>
+    <>
+      <ambientLight intensity={0.2} />
+      <ShieldCore isMobile={isMobile} />
+      <Particles count={isMobile ? 80 : 160} />
+    </>
   );
 }
