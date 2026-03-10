@@ -1,7 +1,12 @@
+import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { GlassCard } from "../components/ui/GlassCard";
 import { Rollup } from "../components/ui/Rollup";
+
+const AutoHero3D = lazy(() =>
+  import("../components/three/AutoHero3D").then((m) => ({ default: m.AutoHero3D })),
+);
 
 const sellingPoints = [
   {
@@ -24,9 +29,7 @@ const sellingPoints = [
 
 const containerVariants = {
   hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.12 },
-  },
+  visible: { transition: { staggerChildren: 0.12 } },
 };
 
 const cardVariants = {
@@ -39,29 +42,50 @@ const cardVariants = {
   },
 };
 
-/**
- * Auto Insurance — "Glassmorphism 2.0"
- * Core selling points rendered as frosted glass cards with iridescent hover borders.
- */
 export function AutoInsurancePage() {
   return (
     <article>
-      {/* ── Hero ── */}
-      <section className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-        <h1 className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary">
-          Auto insurance.
-        </h1>
-        <p className="mt-6 max-w-[520px] text-base text-primary/45 leading-relaxed">
-          At CSC Insurance, we compare rates from multiple carriers to find you the best car
-          insurance in Ontario.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <GhostButton to="/get-a-quote" variant="primary">
-            Let&apos;s get started
-          </GhostButton>
-          <GhostButton to="/get-a-quote" variant="secondary">
-            Start
-          </GhostButton>
+      {/* ── Hero with 3D Shield ── */}
+      <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6">
+        <div className="absolute inset-0 flex items-center justify-center opacity-70">
+          <div className="w-full max-w-[600px]">
+            <Suspense fallback={null}>
+              <AutoHero3D />
+            </Suspense>
+          </div>
+        </div>
+
+        <div className="relative z-10 text-center">
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary"
+          >
+            Auto insurance.
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mt-6 max-w-[520px] text-base text-primary/45 leading-relaxed"
+          >
+            At CSC Insurance, we compare rates from multiple carriers to find you the best car
+            insurance in Ontario.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+          >
+            <GhostButton to="/get-a-quote" variant="primary">
+              Let&apos;s get started
+            </GhostButton>
+            <GhostButton to="/get-a-quote" variant="secondary">
+              Start
+            </GhostButton>
+          </motion.div>
         </div>
       </section>
 
@@ -99,7 +123,6 @@ export function AutoInsurancePage() {
             uninsured automobile coverage.
           </p>
         </Rollup>
-
         <Rollup title="What type of auto insurance coverage do I need?">
           <p>
             Beyond the mandatory minimum, you can add optional coverages such as collision,
@@ -108,7 +131,6 @@ export function AutoInsurancePage() {
             habits.
           </p>
         </Rollup>
-
         <Rollup title="How much does car insurance cost?">
           <p>
             Premiums depend on many factors: your driving record, where you live, how far you
@@ -117,7 +139,6 @@ export function AutoInsurancePage() {
             competitive rate.
           </p>
         </Rollup>
-
         <Rollup title="How do I get auto insurance?">
           <p>
             Fill out our quote form or call us directly. We will compare options from our network of

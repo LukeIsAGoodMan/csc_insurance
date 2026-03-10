@@ -6,8 +6,9 @@ interface PageTransitionProps {
 }
 
 /**
- * Cinematic page transition — "lens push" with subtle depth shift.
- * H1 elements inside will inherit the motion cascade.
+ * Cinematic page transition — "lens push" + aurora flash.
+ * On enter: full-screen blue-violet glow fades in then out behind the content.
+ * On exit: content pushes away with subtle blur.
  */
 
 const pageVariants = {
@@ -38,6 +39,16 @@ const pageTransition = {
   mass: 0.8,
 };
 
+// Aurora glow overlay — fades in quickly then out slowly
+const auroraVariants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: [0, 0.12, 0],
+    transition: { duration: 1.2, times: [0, 0.2, 1], ease: "easeOut" as const },
+  },
+  exit: { opacity: 0 },
+};
+
 export function PageTransition({ children }: PageTransitionProps) {
   return (
     <motion.div
@@ -46,7 +57,18 @@ export function PageTransition({ children }: PageTransitionProps) {
       exit="exit"
       variants={pageVariants}
       transition={pageTransition}
+      className="relative"
     >
+      {/* Aurora flash overlay */}
+      <motion.div
+        variants={auroraVariants}
+        className="pointer-events-none fixed inset-0 z-50"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 40%, rgba(123,111,224,0.25) 0%, rgba(167,139,250,0.1) 40%, transparent 70%)",
+        }}
+      />
+
       {children}
     </motion.div>
   );
