@@ -8,12 +8,17 @@ export function HomeInsurancePage() {
     <article>
       {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
       <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6">
-        <div className="relative z-10 text-center">
+        {/* H1 — no z-index, sits below canvas for 3D pass-through */}
+        <div className="text-center">
           <AnimateText
             text="Property insurance."
             className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary"
             delay={0.3}
           />
+        </div>
+
+        {/* Subtitle + CTA — above canvas */}
+        <div className="relative z-[8] text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -40,7 +45,7 @@ export function HomeInsurancePage() {
       </section>
 
       {/* ── FAQ Rollups ── */}
-      <section className="mx-auto max-w-[780px] px-6 pb-16">
+      <section className="relative z-[10] mx-auto max-w-[780px] px-6 pb-16">
         <Rollup title="Do I need home insurance?">
           <p>
             While not legally required in Ontario, home insurance is typically mandatory if you have
@@ -73,7 +78,7 @@ export function HomeInsurancePage() {
       </section>
 
       {/* ── Bottom CTA ── */}
-      <section className="border-t border-border-light py-20 text-center">
+      <section className="relative z-[10] border-t border-border-light py-20 text-center">
         <h2 className="text-2xl font-semibold tracking-tight text-primary md:text-3xl">
           Get a home insurance quote.
         </h2>

@@ -8,7 +8,7 @@ const footerLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border-light">
+    <footer className="relative z-[10] border-t border-border-light">
       <div className="mx-auto flex max-w-[1120px] flex-col items-center gap-6 px-6 py-12 md:flex-row md:justify-between">
         {/* Brand */}
         <div className="text-center md:text-left">

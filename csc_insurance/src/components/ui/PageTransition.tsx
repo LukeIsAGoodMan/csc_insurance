@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { motion } from "framer-motion";
 
 interface PageTransitionProps {
@@ -50,14 +50,25 @@ const auroraVariants = {
 };
 
 export function PageTransition({ children }: PageTransitionProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
   return (
     <motion.div
+      ref={ref}
       initial="initial"
       animate="animate"
       exit="exit"
       variants={pageVariants}
       transition={pageTransition}
       className="relative"
+      onAnimationComplete={(definition) => {
+        // Clear stacking-context-creating styles after enter animation
+        // so z-axis interplay between canvas (z-5) and page content works
+        if (definition === "animate" && ref.current) {
+          ref.current.style.transform = "none";
+          ref.current.style.filter = "none";
+        }
+      }}
     >
       {/* Aurora flash overlay */}
       <motion.div

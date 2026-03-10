@@ -27,7 +27,7 @@ export function MainLayout() {
 
       <SiteHeader />
 
-      <main id="main-content" className="relative z-10 flex-1 pt-[60px]">
+      <main id="main-content" className="relative flex-1 pt-[60px]">
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
             <Outlet />

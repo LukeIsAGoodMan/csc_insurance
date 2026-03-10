@@ -2,27 +2,47 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { motion, LayoutGroup } from "framer-motion";
 import { useScrollPosition } from "../../hooks/useScrollPosition";
+import { useRouteColor } from "../../hooks/useRouteColor";
 import { navigation } from "../../theme.config";
+
+/* ────────────────────────────────────────────────────────────
+   PremiumHeader — "The Lens of Insurance"
+
+   Material:   backdrop-blur(48px) + bg-white/2% + inner glow bevel
+   Slider:     MagneticNavPill — layoutId + stiffness:400 / damping:30
+   Border:     0.5px iridescent line synced with NebulaBackground colors
+   ──────────────────────────────────────────────────────────── */
+
+function toRgba(c: [number, number, number], a: number) {
+  return `rgba(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${a})`;
+}
 
 export function SiteHeader() {
   const scrolled = useScrollPosition(50);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { col1, col2, col3 } = useRouteColor();
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "backdrop-blur-xl bg-canvas-bg/70" : "bg-transparent"
+      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-500 ${
+        scrolled ? "backdrop-blur-[48px]" : ""
       }`}
+      style={{
+        background: scrolled ? "rgba(255,255,255,0.02)" : "transparent",
+        boxShadow: scrolled
+          ? "inset 0 1px 0 0 rgba(255,255,255,0.1), 0 0 20px rgba(0,0,0,0.03)"
+          : "none",
+      }}
     >
-      {/* Flowing iridescent border — animated gradient replaces static border */}
+      {/* ── 0.5px iridescent border — synced with nebula route colors ── */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-px transition-opacity duration-500"
+        className="absolute bottom-0 left-0 right-0 transition-opacity duration-500"
         style={{
-          opacity: scrolled ? 1 : 0,
-          background:
-            "linear-gradient(90deg, transparent 0%, rgba(123,111,224,0.25) 20%, rgba(167,139,250,0.5) 50%, rgba(96,165,250,0.25) 80%, transparent 100%)",
+          height: "0.5px",
+          opacity: scrolled ? 1 : 0.3,
+          background: `linear-gradient(90deg, transparent 0%, ${toRgba(col1, 0.4)} 25%, ${toRgba(col2, 0.6)} 50%, ${toRgba(col3, 0.4)} 75%, transparent 100%)`,
           backgroundSize: "200% 100%",
-          animation: scrolled ? "shimmer-border 4s linear infinite" : "none",
+          animation: "shimmer-border 4s linear infinite",
         }}
       />
 
@@ -32,9 +52,9 @@ export function SiteHeader() {
           CSC Insurance
         </Link>
 
-        {/* Desktop nav with capsule slider */}
+        {/* Desktop nav — Magnetic Pill Slider */}
         <LayoutGroup>
-          <ul className="hidden items-center gap-1 md:flex">
+          <ul className="hidden items-center gap-0.5 md:flex">
             {navigation.items.map((item) => (
               <li key={item.path}>
                 <NavLink
@@ -45,15 +65,16 @@ export function SiteHeader() {
                     <>
                       {isActive && (
                         <motion.span
-                          layoutId="nav-capsule"
+                          layoutId="active-pill"
                           className="absolute inset-0 rounded-full"
                           style={{
                             background: "rgba(123, 111, 224, 0.08)",
                             border: "1px solid rgba(123, 111, 224, 0.12)",
+                            boxShadow: "0 0 12px rgba(123, 111, 224, 0.06)",
                           }}
                           transition={{
                             type: "spring" as const,
-                            stiffness: 350,
+                            stiffness: 400,
                             damping: 30,
                           }}
                         />
@@ -61,7 +82,7 @@ export function SiteHeader() {
                       <span
                         className={`relative z-10 transition-colors duration-200 ${
                           isActive
-                            ? "text-accent-trust font-medium"
+                            ? "font-medium text-accent-trust"
                             : "text-primary/60 hover:text-primary"
                         }`}
                       >
@@ -113,7 +134,7 @@ export function SiteHeader() {
           mobileOpen ? "max-h-[400px]" : "max-h-0"
         }`}
       >
-        <ul className="flex flex-col gap-1 bg-canvas-bg/95 px-6 pb-6 pt-2 backdrop-blur-xl">
+        <ul className="flex flex-col gap-1 bg-white/[0.03] px-6 pb-6 pt-2 backdrop-blur-[48px]">
           {navigation.items.map((item) => (
             <li key={item.path}>
               <NavLink
@@ -121,7 +142,7 @@ export function SiteHeader() {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
                   `block py-2 text-sm ${
-                    isActive ? "text-accent-trust font-medium" : "text-primary/60"
+                    isActive ? "font-medium text-accent-trust" : "text-primary/60"
                   }`
                 }
               >

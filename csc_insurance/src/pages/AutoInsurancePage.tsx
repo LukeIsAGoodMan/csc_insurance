@@ -43,12 +43,17 @@ export function AutoInsurancePage() {
     <article>
       {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
       <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6">
-        <div className="relative z-10 text-center">
+        {/* H1 — no z-index, sits below canvas for 3D pass-through */}
+        <div className="text-center">
           <AnimateText
             text="Auto insurance."
             className="max-w-[780px] text-display-hero font-semibold tracking-tighter text-primary"
             delay={0.3}
           />
+        </div>
+
+        {/* Subtitle + CTA — above canvas */}
+        <div className="relative z-[8] text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -75,7 +80,7 @@ export function AutoInsurancePage() {
       </section>
 
       {/* ── Glassmorphism Cards ── */}
-      <section className="mx-auto max-w-[1120px] px-6 pb-20">
+      <section className="relative z-[10] mx-auto max-w-[1120px] px-6 pb-20">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -99,7 +104,7 @@ export function AutoInsurancePage() {
       </section>
 
       {/* ── FAQ Rollups ── */}
-      <section className="mx-auto max-w-[780px] px-6 pb-16">
+      <section className="relative z-[10] mx-auto max-w-[780px] px-6 pb-16">
         <Rollup title="Do I need car insurance?">
           <p>
             In Ontario, car insurance is mandatory. You must have a valid auto insurance policy
@@ -133,7 +138,7 @@ export function AutoInsurancePage() {
       </section>
 
       {/* ── Bottom CTA ── */}
-      <section className="border-t border-border-light py-20 text-center">
+      <section className="relative z-[10] border-t border-border-light py-20 text-center">
         <h2 className="text-2xl font-semibold tracking-tight text-primary md:text-3xl">
           Get a car insurance quote.
         </h2>
