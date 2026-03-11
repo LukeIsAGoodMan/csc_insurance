@@ -3,6 +3,7 @@ import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useScenePulse } from "../../hooks/useScenePulse";
 import { AutoScene } from "./AutoHero3D";
 import { HomeScene } from "./HomePrism3D";
 import { BusinessScene } from "./DataOrbit3D";
@@ -34,6 +35,7 @@ const SCENE_MAP: Record<string, string> = {
   "/home-insurance": "home",
   "/business-insurance": "business",
   "/travel-insurance": "travel",
+  "/get-a-quote": "auto",
 };
 
 /* ── Per-scene camera configs ── */
@@ -134,10 +136,10 @@ function ScrollParallax({ children }: { children: React.ReactNode }) {
 }
 
 /* ── Exclusive scene renderer — only ONE scene at a time ── */
-function ActiveScene({ scene, isMobile }: { scene: string; isMobile: boolean }) {
+function ActiveScene({ scene, isMobile, pulse }: { scene: string; isMobile: boolean; pulse: number }) {
   switch (scene) {
     case "auto":
-      return <AutoScene isMobile={isMobile} />;
+      return <AutoScene isMobile={isMobile} pulse={pulse} />;
     case "home":
       return <HomeScene isMobile={isMobile} />;
     case "business":
@@ -153,6 +155,7 @@ function ActiveScene({ scene, isMobile }: { scene: string; isMobile: boolean }) 
 export function GlobalCanvasManager() {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const { pulse } = useScenePulse();
   const [ctxLost, setCtxLost] = useState(0);
 
   /* ── Scene transition state machine ── */
@@ -214,7 +217,7 @@ export function GlobalCanvasManager() {
             <ambientLight intensity={displayScene === "travel" ? 0.3 : 0.2} />
             <ScrollParallax>
               <DisposableGroup key={displayScene}>
-                <ActiveScene scene={displayScene} isMobile={isMobile} />
+                <ActiveScene scene={displayScene} isMobile={isMobile} pulse={pulse} />
               </DisposableGroup>
             </ScrollParallax>
           </>

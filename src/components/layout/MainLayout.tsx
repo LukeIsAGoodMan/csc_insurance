@@ -5,11 +5,14 @@ import { SiteFooter } from "./SiteFooter";
 import { PageTransition } from "../ui/PageTransition";
 import { NebulaBackground } from "../three/NebulaBackground";
 import { GlobalCanvasManager } from "../three/GlobalCanvasManager";
+import { ScenePulseContext, useScenePulseProvider } from "../../hooks/useScenePulse";
 
 export function MainLayout() {
   const location = useLocation();
+  const pulseValue = useScenePulseProvider();
 
   return (
+    <ScenePulseContext.Provider value={pulseValue}>
     <div className="relative flex min-h-screen flex-col">
       {/* CSS nebula gradient — fixed behind everything */}
       <NebulaBackground />
@@ -37,5 +40,6 @@ export function MainLayout() {
 
       <SiteFooter />
     </div>
+    </ScenePulseContext.Provider>
   );
 }

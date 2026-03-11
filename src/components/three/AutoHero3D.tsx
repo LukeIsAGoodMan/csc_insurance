@@ -9,22 +9,35 @@ import * as THREE from "three";
    Pure scene content — rendered inside GlobalCanvasManager.
    ──────────────────────────────────────────────────────────── */
 
-function ShieldCore({ isMobile }: { isMobile: boolean }) {
+function ShieldCore({ isMobile, pulse = 0 }: { isMobile: boolean; pulse?: number }) {
   const groupRef = useRef<THREE.Group>(null!);
   const coreRef = useRef<THREE.Mesh>(null!);
   const timeRef = useRef(0);
+  const pulseRef = useRef(pulse);
+  const pulseTimer = useRef(0);
   const segments = isMobile ? 24 : 48;
 
   useFrame((_, delta) => {
     timeRef.current += delta;
+
+    /* ── Pulse detection ── */
+    if (pulse !== pulseRef.current) {
+      pulseRef.current = pulse;
+      pulseTimer.current = 0.5; // 500ms burst
+    }
+    const isPulsing = pulseTimer.current > 0;
+    if (isPulsing) pulseTimer.current = Math.max(0, pulseTimer.current - delta);
+    const speedMult = isPulsing ? 3 : 1;
+
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.05;
+      groupRef.current.rotation.y += delta * 0.05 * speedMult;
     }
     if (coreRef.current) {
       const mat = coreRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.06 + Math.sin(timeRef.current * 1.2) * 0.03;
-      coreRef.current.rotation.x += delta * 0.15;
-      coreRef.current.rotation.z += delta * 0.1;
+      const baseOpacity = 0.06 + Math.sin(timeRef.current * 1.2) * 0.03;
+      mat.opacity = isPulsing ? 0.15 : baseOpacity;
+      coreRef.current.rotation.x += delta * 0.15 * speedMult;
+      coreRef.current.rotation.z += delta * 0.1 * speedMult;
     }
   });
 
@@ -135,10 +148,10 @@ function Particles({ count }: { count: number }) {
   );
 }
 
-export function AutoScene({ isMobile }: { isMobile: boolean }) {
+export function AutoScene({ isMobile, pulse = 0 }: { isMobile: boolean; pulse?: number }) {
   return (
     <>
-      <ShieldCore isMobile={isMobile} />
+      <ShieldCore isMobile={isMobile} pulse={pulse} />
       <Particles count={isMobile ? 80 : 160} />
     </>
   );
