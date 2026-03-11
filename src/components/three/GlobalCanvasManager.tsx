@@ -204,7 +204,11 @@ export function GlobalCanvasManager() {
     >
       <Canvas
         camera={{ position: [0, 0, 5.5], fov: 42 }}
-        style={{ background: "transparent" }}
+        style={{
+          background: "transparent",
+          pointerEvents: displayScene === "globe" && !isMobile ? "auto" : "none",
+          touchAction: displayScene === "globe" ? "none" : "auto",
+        }}
         gl={{ alpha: true, antialias: !isMobile, powerPreference: "low-power" }}
         dpr={[1, isMobile ? 1 : 1.5]}
         onCreated={({ gl }) => {
@@ -219,7 +223,7 @@ export function GlobalCanvasManager() {
         {displayScene && (
           <>
             <SceneCamera scene={displayScene} />
-            <ambientLight intensity={displayScene === "travel" ? 0.3 : 0.2} />
+            <ambientLight intensity={displayScene === "travel" || displayScene === "globe" ? 0.3 : 0.2} />
             <ScrollParallax>
               <DisposableGroup key={displayScene}>
                 <ActiveScene scene={displayScene} isMobile={isMobile} pulse={pulse} />

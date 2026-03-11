@@ -1,15 +1,16 @@
-import { useRef, useMemo } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useRef, useMemo, useState, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ────────────────────────────────────────────────────────────
    DigitalGlobe3D — Hyper-premium Earth network visualization.
 
-   Material:  Translucent point-cloud sphere + vector continent lines
-   Network:   Glowing city nodes + quadratic Bézier arc connections
-   Palette:   Indigo #6366F1 → Violet #A855F7 → Fuchsia #E879F9
-   Motion:    23.4° axial tilt, slow cinematic rotation
-   Glow:      Dual-layer backside atmosphere + inner gradient sphere
+   Interaction: OrbitControls (no zoom), 3s idle auto-rotate resume
+   Material:    Point-cloud sphere + vector continent outlines (0.75)
+   Landmass:    MeshPhongMaterial fill (0.1) + ShaderMaterial shore glow
+   Network:     Hover-reactive city nodes + tiered labels + Bézier arcs
+   Palette:     Indigo #6366F1 → Violet #A855F7 → Fuchsia #E879F9
    ──────────────────────────────────────────────────────────── */
 
 const R = 1.6;
@@ -87,18 +88,18 @@ const CONTINENTS: [number, number][][] = [
 
 /* ── Major global cities ── */
 const CITIES = [
-  { lat: 43.7, lng: -79.4 },  // Toronto
-  { lat: 40.7, lng: -74.0 },  // New York
-  { lat: 51.5, lng: -0.1 },   // London
-  { lat: 48.9, lng: 2.3 },    // Paris
-  { lat: 25.3, lng: 55.3 },   // Dubai
-  { lat: 19.1, lng: 72.9 },   // Mumbai
-  { lat: 1.3, lng: 103.8 },   // Singapore
-  { lat: 35.7, lng: 139.7 },  // Tokyo
-  { lat: -33.9, lng: 151.2 }, // Sydney
-  { lat: -23.6, lng: -46.6 }, // São Paulo
-  { lat: 6.5, lng: 3.4 },     // Lagos
-  { lat: 30.0, lng: 31.2 },   // Cairo
+  { name: "Toronto", lat: 43.7, lng: -79.4 },
+  { name: "New York", lat: 40.7, lng: -74.0 },
+  { name: "London", lat: 51.5, lng: -0.1 },
+  { name: "Paris", lat: 48.9, lng: 2.3 },
+  { name: "Dubai", lat: 25.3, lng: 55.3 },
+  { name: "Mumbai", lat: 19.1, lng: 72.9 },
+  { name: "Singapore", lat: 1.3, lng: 103.8 },
+  { name: "Tokyo", lat: 35.7, lng: 139.7 },
+  { name: "Sydney", lat: -33.9, lng: 151.2 },
+  { name: "São Paulo", lat: -23.6, lng: -46.6 },
+  { name: "Lagos", lat: 6.5, lng: 3.4 },
+  { name: "Cairo", lat: 30.0, lng: 31.2 },
 ];
 
 /* ── Connection pairs (city indices) ── */
@@ -108,9 +109,53 @@ const ARCS: [number, number][] = [
   [11, 4], [0, 1],
 ];
 
-/* ────────────────── Sub-components ────────────────── */
+/* ──────────────────────────────────────────────────
+   1. OrbitControls — grab/grabbing cursor, idle auto-rotate
+   ────────────────────────────────────────────────── */
 
-/* Point-cloud sphere surface */
+function GlobeControls({ isMobile }: { isMobile: boolean }) {
+  const { gl } = useThree();
+  const [autoRotate, setAutoRotate] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    if (isMobile) return;
+    gl.domElement.style.cursor = "grab";
+    return () => {
+      gl.domElement.style.cursor = "";
+      clearTimeout(timerRef.current);
+    };
+  }, [gl, isMobile]);
+
+  if (isMobile) return null;
+
+  return (
+    <OrbitControls
+      enableZoom={false}
+      enablePan={false}
+      autoRotate={autoRotate}
+      autoRotateSpeed={0.5}
+      minDistance={4.21}
+      maxDistance={4.21}
+      target={[0, 0, 0]}
+      onStart={() => {
+        clearTimeout(timerRef.current);
+        setAutoRotate(false);
+        gl.domElement.style.cursor = "grabbing";
+      }}
+      onEnd={() => {
+        gl.domElement.style.cursor = "grab";
+        timerRef.current = setTimeout(() => setAutoRotate(true), 3000);
+      }}
+    />
+  );
+}
+
+/* ──────────────────────────────────────────────────
+   2. Globe surface layers
+   ────────────────────────────────────────────────── */
+
+/* Point-cloud sphere */
 function PointCloudSurface({ count }: { count: number }) {
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
@@ -137,63 +182,159 @@ function PointCloudSurface({ count }: { count: number }) {
 }
 
 /* Subtle lat/lng graticule grid */
-function Graticule({ isMobile }: { isMobile: boolean }) {
+function Graticule() {
   const lines = useMemo(() => {
     const mat = new THREE.LineBasicMaterial({ color: "#6366F1", transparent: true, opacity: 0.04 });
-    const segs = isMobile ? 48 : 72;
+    const segs = 72;
     const result: THREE.Line[] = [];
 
     for (let lat = -60; lat <= 60; lat += 30) {
       const pts: THREE.Vector3[] = [];
-      for (let i = 0; i <= segs; i++) {
-        pts.push(latLngToVec3(lat, (i / segs) * 360 - 180));
-      }
+      for (let i = 0; i <= segs; i++) pts.push(latLngToVec3(lat, (i / segs) * 360 - 180));
       result.push(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
     }
-
     for (let lng = -180; lng < 180; lng += 30) {
       const pts: THREE.Vector3[] = [];
-      for (let i = 0; i <= segs; i++) {
-        pts.push(latLngToVec3((i / segs) * 180 - 90, lng));
-      }
+      for (let i = 0; i <= segs; i++) pts.push(latLngToVec3((i / segs) * 180 - 90, lng));
       result.push(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
     }
-
     return result;
-  }, [isMobile]);
+  }, []);
 
-  return (
-    <>
-      {lines.map((l, i) => (
-        <primitive key={`g-${i}`} object={l} />
-      ))}
-    </>
-  );
+  return <>{lines.map((l, i) => <primitive key={`g-${i}`} object={l} />)}</>;
 }
 
-/* Vector continent outlines */
+/* ──────────────────────────────────────────────────
+   3. Continent visuals — outlines + fill + shore glow
+   ────────────────────────────────────────────────── */
+
+/* Vector continent outlines — 0.75 opacity */
 function ContinentLines() {
   const lines = useMemo(() => {
-    const mat = new THREE.LineBasicMaterial({ color: "#818CF8", transparent: true, opacity: 0.55 });
+    const mat = new THREE.LineBasicMaterial({ color: "#818CF8", transparent: true, opacity: 0.75 });
     return CONTINENTS.map((path) => {
       const pts = path.map(([lat, lng]) => latLngToVec3(lat, lng, R + 0.003));
       return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
     });
   }, []);
 
+  return <>{lines.map((l, i) => <primitive key={`c-${i}`} object={l} />)}</>;
+}
+
+/* MeshPhongMaterial landmass fill — ShapeGeometry projected to sphere */
+function ContinentFill() {
+  const meshes = useMemo(() => {
+    const mat = new THREE.MeshPhongMaterial({
+      color: "#818CF8",
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
+    return CONTINENTS.map((path) => {
+      const shape = new THREE.Shape();
+      shape.moveTo(path[0][1], path[0][0]);
+      for (let i = 1; i < path.length; i++) shape.lineTo(path[i][1], path[i][0]);
+
+      const geo = new THREE.ShapeGeometry(shape, 1);
+      const pos = geo.attributes.position;
+      const normals = new Float32Array(pos.count * 3);
+
+      for (let j = 0; j < pos.count; j++) {
+        const lng = pos.getX(j);
+        const lat = pos.getY(j);
+        const v = latLngToVec3(lat, lng, R + 0.001);
+        pos.setXYZ(j, v.x, v.y, v.z);
+        const len = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+        normals[j * 3] = v.x / len;
+        normals[j * 3 + 1] = v.y / len;
+        normals[j * 3 + 2] = v.z / len;
+      }
+
+      pos.needsUpdate = true;
+      geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+      return new THREE.Mesh(geo, mat);
+    });
+  }, []);
+
+  return <>{meshes.map((m, i) => <primitive key={`fill-${i}`} object={m} />)}</>;
+}
+
+/* Shoreline glow — ShaderMaterial soft points along coastlines */
+function ShorelineGlow() {
+  const { positions, count } = useMemo(() => {
+    const pts: number[] = [];
+    for (const path of CONTINENTS) {
+      for (let j = 0; j < path.length - 1; j++) {
+        const [lat1, lng1] = path[j];
+        const [lat2, lng2] = path[j + 1];
+        for (let s = 0; s <= 4; s++) {
+          const t = s / 4;
+          const v = latLngToVec3(lat1 + (lat2 - lat1) * t, lng1 + (lng2 - lng1) * t, R + 0.004);
+          pts.push(v.x, v.y, v.z);
+        }
+      }
+    }
+    return { positions: new Float32Array(pts), count: pts.length / 3 };
+  }, []);
+
+  const shaderMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: { uColor: { value: new THREE.Color("#818CF8") } },
+        vertexShader: `
+          void main() {
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * mv;
+            gl_PointSize = 30.0 / (-mv.z);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 uColor;
+          void main() {
+            float d = length(gl_PointCoord - vec2(0.5));
+            if (d > 0.5) discard;
+            float a = smoothstep(0.5, 0.0, d) * 0.15;
+            gl_FragColor = vec4(uColor, a);
+          }
+        `,
+      }),
+    [],
+  );
+
   return (
-    <>
-      {lines.map((l, i) => (
-        <primitive key={`c-${i}`} object={l} />
-      ))}
-    </>
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={count} itemSize={3} />
+      </bufferGeometry>
+      <primitive object={shaderMat} attach="material" />
+    </points>
   );
 }
 
-/* Pulsing city node with glow halo */
-function CityNode({ position, phase }: { position: THREE.Vector3; phase: number }) {
+/* ──────────────────────────────────────────────────
+   4. City nodes — hover color sync + tiered labels
+   ────────────────────────────────────────────────── */
+
+function CityNode({
+  position,
+  name,
+  phase,
+  isMobile,
+}: {
+  position: THREE.Vector3;
+  name: string;
+  phase: number;
+  isMobile: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
   const glowRef = useRef<THREE.Mesh>(null!);
+  const labelRef = useRef<THREE.Group>(null!);
   const t = useRef(phase);
+  const { camera } = useThree();
 
   useFrame((_, delta) => {
     t.current += delta;
@@ -201,42 +342,69 @@ function CityNode({ position, phase }: { position: THREE.Vector3; phase: number 
       (glowRef.current.material as THREE.MeshBasicMaterial).opacity =
         0.12 + Math.sin(t.current * 2) * 0.08;
     }
+    if (labelRef.current) {
+      const wp = new THREE.Vector3();
+      labelRef.current.getWorldPosition(wp);
+      labelRef.current.visible = wp.normalize().dot(camera.position.clone().normalize()) > 0.3;
+      labelRef.current.quaternion.copy(camera.quaternion);
+    }
   });
 
   return (
     <group position={position}>
-      <mesh>
+      <mesh
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
         <sphereGeometry args={[0.018, 8, 8]} />
-        <meshBasicMaterial color="#A855F7" transparent opacity={0.9} />
+        <meshBasicMaterial color={hovered ? "#A855F7" : "#6366F1"} transparent opacity={0.9} />
       </mesh>
       <mesh ref={glowRef}>
         <sphereGeometry args={[0.045, 8, 8]} />
         <meshBasicMaterial color="#A855F7" transparent opacity={0.12} />
       </mesh>
+      {!isMobile && (
+        <group ref={labelRef}>
+          <Text
+            fontSize={0.04}
+            color="#94A3B8"
+            anchorX="left"
+            anchorY="bottom"
+            letterSpacing={0.06}
+            position={[0.055, 0.015, 0]}
+          >
+            {name}
+          </Text>
+        </group>
+      )}
     </group>
   );
 }
 
-/* All city nodes */
-function CityNodes() {
+function CityNodes({ isMobile }: { isMobile: boolean }) {
   const data = useMemo(
-    () => CITIES.map((c, i) => ({
-      pos: latLngToVec3(c.lat, c.lng, R + 0.008),
-      phase: (i / CITIES.length) * Math.PI * 2,
-    })),
+    () =>
+      CITIES.map((c, i) => ({
+        pos: latLngToVec3(c.lat, c.lng, R + 0.008),
+        name: c.name,
+        phase: (i / CITIES.length) * Math.PI * 2,
+      })),
     [],
   );
 
   return (
     <>
       {data.map((d, i) => (
-        <CityNode key={`n-${i}`} position={d.pos} phase={d.phase} />
+        <CityNode key={`n-${i}`} position={d.pos} name={d.name} phase={d.phase} isMobile={isMobile} />
       ))}
     </>
   );
 }
 
-/* Traveling dot along an arc */
+/* ──────────────────────────────────────────────────
+   5. Network arcs + traveling dots
+   ────────────────────────────────────────────────── */
+
 function TravelDot({ curve, speed }: { curve: THREE.QuadraticBezierCurve3; speed: number }) {
   const ref = useRef<THREE.Mesh>(null!);
   const t = useRef(Math.random());
@@ -254,7 +422,6 @@ function TravelDot({ curve, speed }: { curve: THREE.QuadraticBezierCurve3; speed
   );
 }
 
-/* Bézier arc connections + traveling dots */
 function NetworkArcs({ isMobile }: { isMobile: boolean }) {
   const data = useMemo(() => {
     const mat = new THREE.LineBasicMaterial({ color: "#A855F7", transparent: true, opacity: 0.22 });
@@ -264,8 +431,7 @@ function NetworkArcs({ isMobile }: { isMobile: boolean }) {
       const start = latLngToVec3(CITIES[a].lat, CITIES[a].lng, R + 0.005);
       const end = latLngToVec3(CITIES[b].lat, CITIES[b].lng, R + 0.005);
       const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-      const elev = 0.18 + start.distanceTo(end) * 0.28;
-      mid.normalize().multiplyScalar(R + elev);
+      mid.normalize().multiplyScalar(R + 0.18 + start.distanceTo(end) * 0.28);
       const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
       const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(detail));
       return { line: new THREE.Line(geo, mat), curve, speed: 0.06 + Math.random() * 0.04 };
@@ -284,7 +450,10 @@ function NetworkArcs({ isMobile }: { isMobile: boolean }) {
   );
 }
 
-/* Dual-layer atmosphere rim glow */
+/* ──────────────────────────────────────────────────
+   6. Atmosphere + inner glow
+   ────────────────────────────────────────────────── */
+
 function Atmosphere() {
   return (
     <>
@@ -300,7 +469,6 @@ function Atmosphere() {
   );
 }
 
-/* Inner gradient glow */
 function InnerGlow() {
   return (
     <>
@@ -316,24 +484,20 @@ function InnerGlow() {
   );
 }
 
-/* ────────────────── Assembled Globe ────────────────── */
+/* ──────────────────────────────────────────────────
+   7. Assembled globe + scene export
+   ────────────────────────────────────────────────── */
 
 function DigitalGlobe({ isMobile }: { isMobile: boolean }) {
-  const groupRef = useRef<THREE.Group>(null!);
-
-  useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.04;
-    }
-  });
-
   return (
-    <group ref={groupRef} rotation={[0.15, 0, -0.41]}>
+    <group rotation={[0.15, 0, -0.41]}>
       <PointCloudSurface count={isMobile ? 1500 : 3500} />
-      {!isMobile && <Graticule isMobile={isMobile} />}
+      {!isMobile && <Graticule />}
+      <ContinentFill />
       <ContinentLines />
+      <ShorelineGlow />
       <InnerGlow />
-      <CityNodes />
+      <CityNodes isMobile={isMobile} />
       <NetworkArcs isMobile={isMobile} />
       <Atmosphere />
     </group>
@@ -341,5 +505,11 @@ function DigitalGlobe({ isMobile }: { isMobile: boolean }) {
 }
 
 export function DigitalGlobeScene({ isMobile }: { isMobile: boolean }) {
-  return <DigitalGlobe isMobile={isMobile} />;
+  return (
+    <>
+      <directionalLight position={[3, 2, 4]} intensity={0.3} />
+      <GlobeControls isMobile={isMobile} />
+      <DigitalGlobe isMobile={isMobile} />
+    </>
+  );
 }
