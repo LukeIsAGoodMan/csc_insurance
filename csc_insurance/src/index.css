@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-transparent text-primary font-sans;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+  }
+
+  ::selection {
+    background: rgba(29, 60, 52, 0.12);
+  }
+}
+
+/* ── Nebula gradient blobs — GPU-accelerated drift ── */
+.nebula-blob {
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+  transition: background 1.5s ease;
+}
+.nebula-blob-1 {
+  left: 10%;
+  top: 5%;
+  animation: nebula-drift-1 28s ease-in-out infinite alternate;
+}
+.nebula-blob-2 {
+  right: 5%;
+  top: 25%;
+  animation: nebula-drift-2 24s ease-in-out infinite alternate;
+}
+.nebula-blob-3 {
+  left: 30%;
+  bottom: 0%;
+  animation: nebula-drift-3 32s ease-in-out infinite alternate;
+}
+
+@keyframes nebula-drift-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(8%, 15%) scale(1.12); }
+  66% { transform: translate(-6%, 8%) scale(0.95); }
+  100% { transform: translate(12%, -5%) scale(1.08); }
+}
+@keyframes nebula-drift-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-15%, 8%) scale(1.15); }
+  66% { transform: translate(8%, -10%) scale(0.92); }
+  100% { transform: translate(-10%, 12%) scale(1.1); }
+}
+@keyframes nebula-drift-3 {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(12%, -12%) scale(1.08); }
+  66% { transform: translate(-10%, 6%) scale(1.15); }
+  100% { transform: translate(6%, 10%) scale(0.96); }
+}
+
+/* ── Header shimmer border ── */
+@keyframes shimmer-border {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
