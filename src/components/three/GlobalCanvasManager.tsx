@@ -35,7 +35,7 @@ const SCENE_MAP: Record<string, string> = {
   "/auto-insurance": "auto",
   "/home-insurance": "home",
   "/business-insurance": "business",
-  "/travel-insurance": "travel",
+  "/travel-insurance": "globe",
   "/get-a-quote": "auto",
   "/about": "globe",
 };

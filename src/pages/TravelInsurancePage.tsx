@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { GhostButton } from "../components/ui/GhostButton";
 import { Rollup } from "../components/ui/Rollup";
 import { AnimateText } from "../components/ui/AnimateText";
+import { ElectronicSignatureStreamer } from "../components/ui/ElectronicSignatureStreamer";
 
 /**
- * Travel Insurance — "The Crystal Globe"
- * Interactive 3D wireframe earth replaces old template filler.
+ * Travel Insurance — "The Digital Globe"
+ * DigitalGlobe3D network visualization + Electronic Signature flow.
  */
 export function TravelInsurancePage() {
+  const [showSignature, setShowSignature] = useState(false);
   return (
     <article>
       {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
@@ -42,9 +45,13 @@ export function TravelInsurancePage() {
             <GhostButton to="/get-a-quote" variant="primary">
               Let&apos;s get started
             </GhostButton>
-            <GhostButton to="/get-a-quote" variant="secondary">
-              Start
-            </GhostButton>
+            <button
+              type="button"
+              onClick={() => setShowSignature(true)}
+              className="rounded-full border border-white/15 px-8 py-3 text-sm font-medium text-primary/60 transition-all hover:border-accent-trust/40 hover:text-accent-trust"
+            >
+              Confirm &amp; Sign
+            </button>
           </motion.div>
         </div>
       </section>
@@ -90,12 +97,26 @@ export function TravelInsurancePage() {
         <h2 className="text-2xl font-semibold tracking-tight text-primary md:text-3xl">
           Get a travel insurance quote.
         </h2>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <GhostButton to="/get-a-quote" variant="primary">
             Start
           </GhostButton>
+          <button
+            type="button"
+            onClick={() => setShowSignature(true)}
+            className="rounded-full border border-white/15 px-8 py-3 text-sm font-medium text-primary/60 transition-all hover:border-accent-trust/40 hover:text-accent-trust"
+          >
+            Confirm &amp; Sign
+          </button>
         </div>
       </section>
+
+      {/* ── Signature modal ── */}
+      <ElectronicSignatureStreamer
+        open={showSignature}
+        onClose={() => setShowSignature(false)}
+        onConfirm={() => setShowSignature(false)}
+      />
     </article>
   );
 }
