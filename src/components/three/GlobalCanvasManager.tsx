@@ -8,6 +8,7 @@ import { AutoScene } from "./AutoHero3D";
 import { HomeScene } from "./HomePrism3D";
 import { BusinessScene } from "./DataOrbit3D";
 import { TravelScene } from "./CrystalGlobe";
+import { DigitalGlobeScene } from "./DigitalGlobe3D";
 
 /* ────────────────────────────────────────────────────────────
    GlobalCanvasManager — Singleton WebGL Canvas.
@@ -36,6 +37,7 @@ const SCENE_MAP: Record<string, string> = {
   "/business-insurance": "business",
   "/travel-insurance": "travel",
   "/get-a-quote": "auto",
+  "/about": "globe",
 };
 
 /* ── Per-scene camera configs ── */
@@ -44,6 +46,7 @@ const CAM: Record<string, { pos: [number, number, number]; fov: number }> = {
   home: { pos: [0, 1.2, 4.5], fov: 40 },
   business: { pos: [0, 1.5, 5.5], fov: 42 },
   travel: { pos: [0, 0, 5.5], fov: 45 },
+  globe: { pos: [0, 0.3, 4.2], fov: 45 },
 };
 
 /* ── Camera controller ── */
@@ -146,6 +149,8 @@ function ActiveScene({ scene, isMobile, pulse }: { scene: string; isMobile: bool
       return <BusinessScene isMobile={isMobile} />;
     case "travel":
       return <TravelScene isMobile={isMobile} />;
+    case "globe":
+      return <DigitalGlobeScene isMobile={isMobile} />;
     default:
       return null;
   }
