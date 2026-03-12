@@ -14,12 +14,13 @@ interface SignatureStreamerProps {
   open: boolean;
   onClose: () => void;
   onConfirm: (dataUrl: string) => void;
+  onSuccess?: () => void;
 }
 
 const GLOW_PALETTE = ["#A855F7", "#E879F9", "#818CF8"];
 const SPRING = { type: "spring" as const, stiffness: 300, damping: 30 };
 
-export function ElectronicSignatureStreamer({ open, onClose, onConfirm }: SignatureStreamerProps) {
+export function ElectronicSignatureStreamer({ open, onClose, onConfirm, onSuccess }: SignatureStreamerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const distRef = useRef(0);
@@ -133,6 +134,7 @@ export function ElectronicSignatureStreamer({ open, onClose, onConfirm }: Signat
   function handleConfirm() {
     if (!canvasRef.current) return;
     onConfirm(canvasRef.current.toDataURL("image/png"));
+    onSuccess?.();
   }
 
   return (

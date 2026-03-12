@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useScenePulse } from "../../hooks/useScenePulse";
+import { useSceneVisibility } from "../../hooks/useSceneVisibility";
 import { AutoScene } from "./AutoHero3D";
 import { HomeScene } from "./HomePrism3D";
 import { BusinessScene } from "./DataOrbit3D";
@@ -14,8 +14,8 @@ import { DigitalGlobeScene } from "./DigitalGlobe3D";
    GlobalCanvasManager — Singleton WebGL Canvas.
 
    Architecture:
-   ✅ ONE Canvas, permanently mounted in MainLayout
-   ✅ DOM-level fade transition: fadeOut → swap scene → fadeIn
+   ✅ ONE Canvas, permanently mounted at App root (outside Routes)
+   ✅ useSceneVisibility hook: fade state machine + SCENE_MAP
    ✅ DisposableGroup: geometry + material + texture + RT disposal
    ✅ SceneGuard: useFrame wipe when no product page active
    ✅ ScrollParallax: 3D scenes drift at 0.4x scroll speed
@@ -28,16 +28,6 @@ const _warn = console.warn;
 console.warn = (...args: unknown[]) => {
   if (typeof args[0] === "string" && args[0].includes("Clock")) return;
   _warn.apply(console, args);
-};
-
-/* ── Route → scene key ── */
-const SCENE_MAP: Record<string, string> = {
-  "/auto-insurance": "auto",
-  "/home-insurance": "home",
-  "/business-insurance": "business",
-  "/travel-insurance": "globe",
-  "/get-a-quote": "auto",
-  "/about": "globe",
 };
 
 /* ── Per-scene camera configs ── */
@@ -139,7 +129,17 @@ function ScrollParallax({ children }: { children: React.ReactNode }) {
 }
 
 /* ── Exclusive scene renderer — only ONE scene at a time ── */
-function ActiveScene({ scene, isMobile, pulse }: { scene: string; isMobile: boolean; pulse: number }) {
+function ActiveScene({
+  scene,
+  isMobile,
+  pulse,
+  celebration,
+}: {
+  scene: string;
+  isMobile: boolean;
+  pulse: number;
+  celebration: number;
+}) {
   switch (scene) {
     case "auto":
       return <AutoScene isMobile={isMobile} pulse={pulse} />;
@@ -150,7 +150,7 @@ function ActiveScene({ scene, isMobile, pulse }: { scene: string; isMobile: bool
     case "travel":
       return <TravelScene isMobile={isMobile} />;
     case "globe":
-      return <DigitalGlobeScene isMobile={isMobile} />;
+      return <DigitalGlobeScene isMobile={isMobile} celebration={celebration} />;
     default:
       return null;
   }
@@ -158,31 +158,11 @@ function ActiveScene({ scene, isMobile, pulse }: { scene: string; isMobile: bool
 
 /* ── Main singleton Canvas ── */
 export function GlobalCanvasManager() {
-  const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const { pulse } = useScenePulse();
+  const { pulse, celebration } = useScenePulse();
+  const { displayScene, containerOpacity } = useSceneVisibility();
   const [ctxLost, setCtxLost] = useState(0);
 
-  /* ── Scene transition state machine ── */
-  const targetScene = SCENE_MAP[pathname] ?? null;
-  const [displayScene, setDisplayScene] = useState<string | null>(targetScene);
-  const [fading, setFading] = useState(false);
-
-  useEffect(() => {
-    if (targetScene === displayScene) {
-      setFading(false);
-      return;
-    }
-    setFading(true);
-    const id = setTimeout(() => {
-      setDisplayScene(targetScene);
-      requestAnimationFrame(() => setFading(false));
-    }, 500);
-    return () => clearTimeout(id);
-  }, [targetScene, displayScene]);
-
-  /* Container opacity: 0 during fade, 0.8 when scene active, 0 when no scene */
-  const containerOpacity = fading ? 0 : displayScene ? 0.8 : 0;
   const fallback = ctxLost >= 3;
 
   /* After 3 context losses → static gradient, no WebGL */
@@ -226,7 +206,7 @@ export function GlobalCanvasManager() {
             <ambientLight intensity={displayScene === "travel" || displayScene === "globe" ? 0.3 : 0.2} />
             <ScrollParallax>
               <DisposableGroup key={displayScene}>
-                <ActiveScene scene={displayScene} isMobile={isMobile} pulse={pulse} />
+                <ActiveScene scene={displayScene} isMobile={isMobile} pulse={pulse} celebration={celebration} />
               </DisposableGroup>
             </ScrollParallax>
           </>

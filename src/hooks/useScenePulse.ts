@@ -10,11 +10,15 @@ import { createContext, useContext, useState, useCallback } from "react";
 interface ScenePulseCtx {
   pulse: number;
   triggerPulse: () => void;
+  celebration: number;
+  triggerCelebration: () => void;
 }
 
 const ScenePulseContext = createContext<ScenePulseCtx>({
   pulse: 0,
   triggerPulse: () => {},
+  celebration: 0,
+  triggerCelebration: () => {},
 });
 
 export function useScenePulse() {
@@ -24,7 +28,9 @@ export function useScenePulse() {
 export function useScenePulseProvider() {
   const [pulse, setPulse] = useState(0);
   const triggerPulse = useCallback(() => setPulse((n) => n + 1), []);
-  return { pulse, triggerPulse };
+  const [celebration, setCelebration] = useState(0);
+  const triggerCelebration = useCallback(() => setCelebration((n) => n + 1), []);
+  return { pulse, triggerPulse, celebration, triggerCelebration };
 }
 
 export { ScenePulseContext };

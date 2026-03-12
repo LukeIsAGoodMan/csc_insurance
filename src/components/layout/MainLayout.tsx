@@ -4,21 +4,16 @@ import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { PageTransition } from "../ui/PageTransition";
 import { NebulaBackground } from "../three/NebulaBackground";
-import { GlobalCanvasManager } from "../three/GlobalCanvasManager";
-import { ScenePulseContext, useScenePulseProvider } from "../../hooks/useScenePulse";
+import { GridBackground } from "../ui/GridBackground";
 
 export function MainLayout() {
   const location = useLocation();
-  const pulseValue = useScenePulseProvider();
 
   return (
-    <ScenePulseContext.Provider value={pulseValue}>
     <div className="relative flex min-h-screen flex-col">
       {/* CSS nebula gradient — fixed behind everything */}
       <NebulaBackground />
-
-      {/* Singleton WebGL Canvas — one context for all 3D scenes */}
-      <GlobalCanvasManager />
+      <GridBackground />
 
       {/* Skip to content — a11y */}
       <a
@@ -40,6 +35,5 @@ export function MainLayout() {
 
       <SiteFooter />
     </div>
-    </ScenePulseContext.Provider>
   );
 }

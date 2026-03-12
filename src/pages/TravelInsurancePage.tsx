@@ -4,6 +4,7 @@ import { GhostButton } from "../components/ui/GhostButton";
 import { Rollup } from "../components/ui/Rollup";
 import { AnimateText } from "../components/ui/AnimateText";
 import { ElectronicSignatureStreamer } from "../components/ui/ElectronicSignatureStreamer";
+import { useScenePulse } from "../hooks/useScenePulse";
 
 /**
  * Travel Insurance — "The Digital Globe"
@@ -11,6 +12,7 @@ import { ElectronicSignatureStreamer } from "../components/ui/ElectronicSignatur
  */
 export function TravelInsurancePage() {
   const [showSignature, setShowSignature] = useState(false);
+  const { triggerCelebration } = useScenePulse();
   return (
     <article>
       {/* ── Hero (3D rendered by GlobalCanvasManager) ── */}
@@ -116,6 +118,7 @@ export function TravelInsurancePage() {
         open={showSignature}
         onClose={() => setShowSignature(false)}
         onConfirm={() => setShowSignature(false)}
+        onSuccess={triggerCelebration}
       />
     </article>
   );

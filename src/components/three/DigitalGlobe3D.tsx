@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Text } from "@react-three/drei";
+import { OrbitControls, Text, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ────────────────────────────────────────────────────────────
@@ -9,13 +9,14 @@ import * as THREE from "three";
    Interaction: OrbitControls (no zoom), 3s idle auto-rotate resume
    Material:    Point-cloud sphere + vector continent outlines (0.75)
    Landmass:    MeshPhongMaterial fill (0.1) + ShaderMaterial shore glow
-   Network:     Hover-reactive city nodes + tiered labels + Bézier arcs
-   Palette:     Indigo #6366F1 → Violet #A855F7 → Fuchsia #E879F9
+   Network:     32 city nodes + Billboard labels + Bezier arcs
+   Celebration: Particle burst triggered by signature confirmation
+   Palette:     Indigo #6366F1 -> Violet #A855F7 -> Fuchsia #E879F9
    ──────────────────────────────────────────────────────────── */
 
 const R = 1.6;
 
-/* ── Geographic → Cartesian ── */
+/* ── Geographic -> Cartesian ── */
 function latLngToVec3(lat: number, lng: number, r = R): THREE.Vector3 {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lng + 180) * (Math.PI / 180);
@@ -86,7 +87,7 @@ const CONTINENTS: [number, number][][] = [
   ],
 ];
 
-/* ── Major global cities ── */
+/* ── 32 global cities ── */
 const CITIES = [
   { name: "Toronto", lat: 43.7, lng: -79.4 },
   { name: "New York", lat: 40.7, lng: -74.0 },
@@ -97,16 +98,51 @@ const CITIES = [
   { name: "Singapore", lat: 1.3, lng: 103.8 },
   { name: "Tokyo", lat: 35.7, lng: 139.7 },
   { name: "Sydney", lat: -33.9, lng: 151.2 },
-  { name: "São Paulo", lat: -23.6, lng: -46.6 },
+  { name: "Sao Paulo", lat: -23.6, lng: -46.6 },
   { name: "Lagos", lat: 6.5, lng: 3.4 },
   { name: "Cairo", lat: 30.0, lng: 31.2 },
+  { name: "Moscow", lat: 55.8, lng: 37.6 },
+  { name: "Istanbul", lat: 41.0, lng: 28.9 },
+  { name: "Beijing", lat: 39.9, lng: 116.4 },
+  { name: "Shanghai", lat: 31.2, lng: 121.5 },
+  { name: "Hong Kong", lat: 22.3, lng: 114.2 },
+  { name: "Seoul", lat: 37.6, lng: 127.0 },
+  { name: "Bangkok", lat: 13.8, lng: 100.5 },
+  { name: "Jakarta", lat: -6.2, lng: 106.8 },
+  { name: "Manila", lat: 14.6, lng: 121.0 },
+  { name: "Nairobi", lat: -1.3, lng: 36.8 },
+  { name: "Johannesburg", lat: -26.2, lng: 28.0 },
+  { name: "Mexico City", lat: 19.4, lng: -99.1 },
+  { name: "Buenos Aires", lat: -34.6, lng: -58.4 },
+  { name: "Lima", lat: -12.1, lng: -77.0 },
+  { name: "Santiago", lat: -33.5, lng: -70.6 },
+  { name: "Berlin", lat: 52.5, lng: 13.4 },
+  { name: "Madrid", lat: 40.4, lng: -3.7 },
+  { name: "Amsterdam", lat: 52.4, lng: 4.9 },
+  { name: "Rome", lat: 41.9, lng: 12.5 },
+  { name: "Kuala Lumpur", lat: 3.1, lng: 101.7 },
 ];
 
 /* ── Connection pairs (city indices) ── */
 const ARCS: [number, number][] = [
+  /* Original network */
   [0, 2], [1, 9], [2, 3], [2, 10], [3, 4],
   [4, 5], [5, 6], [6, 7], [7, 8], [10, 11],
   [11, 4], [0, 1],
+  /* European ring */
+  [2, 27], [27, 30], [30, 28], [3, 29],
+  /* Istanbul / Moscow bridge */
+  [4, 13], [13, 12], [12, 27],
+  /* Africa spine */
+  [4, 21], [21, 22], [11, 21],
+  /* East Asia chain */
+  [14, 15], [15, 16], [16, 17],
+  /* SE Asia loop */
+  [6, 18], [18, 19], [19, 31],
+  /* Americas cross-links */
+  [23, 24], [24, 25], [1, 23], [0, 23], [9, 24],
+  /* Pacific arcs */
+  [8, 19], [7, 20],
 ];
 
 /* ──────────────────────────────────────────────────
@@ -316,8 +352,39 @@ function ShorelineGlow() {
 }
 
 /* ──────────────────────────────────────────────────
-   4. City nodes — hover color sync + tiered labels
+   4. City nodes — Billboard labels + hover color sync
    ────────────────────────────────────────────────── */
+
+function CityLabel({ name }: { name: string }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  const { camera } = useThree();
+
+  useFrame(() => {
+    if (groupRef.current) {
+      const wp = new THREE.Vector3();
+      groupRef.current.getWorldPosition(wp);
+      groupRef.current.visible =
+        wp.normalize().dot(camera.position.clone().normalize()) > 0.3;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      <Billboard>
+        <Text
+          fontSize={0.04}
+          color="#94A3B8"
+          anchorX="left"
+          anchorY="bottom"
+          letterSpacing={0.06}
+          position={[0.055, 0.015, 0]}
+        >
+          {name}
+        </Text>
+      </Billboard>
+    </group>
+  );
+}
 
 function CityNode({
   position,
@@ -332,21 +399,13 @@ function CityNode({
 }) {
   const [hovered, setHovered] = useState(false);
   const glowRef = useRef<THREE.Mesh>(null!);
-  const labelRef = useRef<THREE.Group>(null!);
   const t = useRef(phase);
-  const { camera } = useThree();
 
   useFrame((_, delta) => {
     t.current += delta;
     if (glowRef.current) {
       (glowRef.current.material as THREE.MeshBasicMaterial).opacity =
         0.12 + Math.sin(t.current * 2) * 0.08;
-    }
-    if (labelRef.current) {
-      const wp = new THREE.Vector3();
-      labelRef.current.getWorldPosition(wp);
-      labelRef.current.visible = wp.normalize().dot(camera.position.clone().normalize()) > 0.3;
-      labelRef.current.quaternion.copy(camera.quaternion);
     }
   });
 
@@ -363,20 +422,7 @@ function CityNode({
         <sphereGeometry args={[0.045, 8, 8]} />
         <meshBasicMaterial color="#A855F7" transparent opacity={0.12} />
       </mesh>
-      {!isMobile && (
-        <group ref={labelRef}>
-          <Text
-            fontSize={0.04}
-            color="#94A3B8"
-            anchorX="left"
-            anchorY="bottom"
-            letterSpacing={0.06}
-            position={[0.055, 0.015, 0]}
-          >
-            {name}
-          </Text>
-        </group>
-      )}
+      {!isMobile && <CityLabel name={name} />}
     </group>
   );
 }
@@ -485,7 +531,101 @@ function InnerGlow() {
 }
 
 /* ──────────────────────────────────────────────────
-   7. Assembled globe + scene export
+   7. CelebrationBurst — particle explosion on signature
+   ────────────────────────────────────────────────── */
+
+const BURST_COUNT = 80;
+const BURST_LIFETIME = 1.5;
+
+function CelebrationBurst({ trigger }: { trigger: number }) {
+  const triggered = useRef(0);
+  const age = useRef<number | null>(null);
+  const directions = useRef<Float32Array>(new Float32Array(BURST_COUNT * 3));
+  const speeds = useRef<Float32Array>(new Float32Array(BURST_COUNT));
+  const origins = useRef<Float32Array>(new Float32Array(BURST_COUNT * 3));
+  const posRef = useRef<THREE.BufferAttribute>(null!);
+  const matRef = useRef<THREE.PointsMaterial>(null!);
+
+  useEffect(() => {
+    if (trigger === 0 || trigger === triggered.current) return;
+    triggered.current = trigger;
+    age.current = 0;
+
+    for (let i = 0; i < BURST_COUNT; i++) {
+      const phi = Math.acos(2 * Math.random() - 1);
+      const theta = 2 * Math.PI * Math.random();
+      const ox = R * Math.sin(phi) * Math.cos(theta);
+      const oy = R * Math.cos(phi);
+      const oz = R * Math.sin(phi) * Math.sin(theta);
+
+      origins.current[i * 3] = ox;
+      origins.current[i * 3 + 1] = oy;
+      origins.current[i * 3 + 2] = oz;
+
+      const len = Math.sqrt(ox * ox + oy * oy + oz * oz);
+      directions.current[i * 3] = ox / len;
+      directions.current[i * 3 + 1] = oy / len;
+      directions.current[i * 3 + 2] = oz / len;
+
+      speeds.current[i] = 0.8 + Math.random() * 1.2;
+    }
+  }, [trigger]);
+
+  useFrame((_, delta) => {
+    if (age.current === null) return;
+    age.current += delta;
+
+    const t = age.current / BURST_LIFETIME;
+    if (t >= 1) {
+      age.current = null;
+      if (matRef.current) matRef.current.opacity = 0;
+      return;
+    }
+
+    if (posRef.current) {
+      const arr = posRef.current.array as Float32Array;
+      for (let i = 0; i < BURST_COUNT; i++) {
+        const dist = speeds.current[i] * age.current;
+        arr[i * 3] = origins.current[i * 3] + directions.current[i * 3] * dist;
+        arr[i * 3 + 1] = origins.current[i * 3 + 1] + directions.current[i * 3 + 1] * dist;
+        arr[i * 3 + 2] = origins.current[i * 3 + 2] + directions.current[i * 3 + 2] * dist;
+      }
+      posRef.current.needsUpdate = true;
+    }
+
+    if (matRef.current) {
+      matRef.current.opacity = t < 0.3 ? 0.9 : 0.9 * (1 - (t - 0.3) / 0.7);
+    }
+  });
+
+  const initialPositions = useMemo(() => new Float32Array(BURST_COUNT * 3), []);
+
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute
+          ref={posRef}
+          attach="attributes-position"
+          args={[initialPositions, 3]}
+          count={BURST_COUNT}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        ref={matRef}
+        color="#E879F9"
+        size={0.035}
+        transparent
+        opacity={0}
+        sizeAttenuation
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+/* ──────────────────────────────────────────────────
+   8. Assembled globe + scene export
    ────────────────────────────────────────────────── */
 
 function DigitalGlobe({ isMobile }: { isMobile: boolean }) {
@@ -504,12 +644,19 @@ function DigitalGlobe({ isMobile }: { isMobile: boolean }) {
   );
 }
 
-export function DigitalGlobeScene({ isMobile }: { isMobile: boolean }) {
+export function DigitalGlobeScene({
+  isMobile,
+  celebration,
+}: {
+  isMobile: boolean;
+  celebration: number;
+}) {
   return (
     <>
       <directionalLight position={[3, 2, 4]} intensity={0.3} />
       <GlobeControls isMobile={isMobile} />
       <DigitalGlobe isMobile={isMobile} />
+      <CelebrationBurst trigger={celebration} />
     </>
   );
 }
