@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
    GridBackground — Subtle CSS grid with mouse-tracking parallax.
 
    z-[1]: above NebulaBackground (z-0), below Canvas (z-[5]).
-   40px grid interval, indigo lines at 4% opacity.
+   40px repeating-linear-gradient grid, radial mask fade at edges.
    Mouse offset drives ±8px translate via rAF lerp.
    ──────────────────────────────────────────────────────────── */
 
@@ -49,10 +49,12 @@ export function GridBackground() {
           position: "absolute",
           inset: "-20px",
           backgroundImage: [
-            "linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px)",
-            "linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px)",
+            "repeating-linear-gradient(0deg, #f0f0f0 0px, #f0f0f0 1px, transparent 1px, transparent 40px)",
+            "repeating-linear-gradient(90deg, #f0f0f0 0px, #f0f0f0 1px, transparent 1px, transparent 40px)",
           ].join(", "),
-          backgroundSize: "40px 40px",
+          opacity: 0.04,
+          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)",
         }}
       />
     </div>

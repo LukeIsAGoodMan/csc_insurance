@@ -355,34 +355,42 @@ function ShorelineGlow() {
    4. City nodes — Billboard labels + hover color sync
    ────────────────────────────────────────────────── */
 
-function CityLabel({ name }: { name: string }) {
-  const groupRef = useRef<THREE.Group>(null!);
-  const { camera } = useThree();
+/* Fading label — opacity driven by shared ref from CityNodes */
+function CityLabel({
+  name,
+  opacitiesRef,
+  index,
+}: {
+  name: string;
+  opacitiesRef: React.RefObject<Float32Array>;
+  index: number;
+}) {
+  const textRef = useRef<THREE.Mesh>(null!);
 
   useFrame(() => {
-    if (groupRef.current) {
-      const wp = new THREE.Vector3();
-      groupRef.current.getWorldPosition(wp);
-      groupRef.current.visible =
-        wp.normalize().dot(camera.position.clone().normalize()) > 0.3;
+    if (textRef.current) {
+      const o = opacitiesRef.current![index];
+      textRef.current.visible = o > 0.01;
+      const mat = textRef.current.material as THREE.Material;
+      mat.transparent = true;
+      mat.opacity = o;
     }
   });
 
   return (
-    <group ref={groupRef}>
-      <Billboard>
-        <Text
-          fontSize={0.04}
-          color="#94A3B8"
-          anchorX="left"
-          anchorY="bottom"
-          letterSpacing={0.06}
-          position={[0.055, 0.015, 0]}
-        >
-          {name}
-        </Text>
-      </Billboard>
-    </group>
+    <Billboard>
+      <Text
+        ref={textRef}
+        fontSize={0.04}
+        color="#94A3B8"
+        anchorX="left"
+        anchorY="bottom"
+        letterSpacing={0.06}
+        position={[0.055, 0.015, 0]}
+      >
+        {name}
+      </Text>
+    </Billboard>
   );
 }
 
@@ -391,11 +399,15 @@ function CityNode({
   name,
   phase,
   isMobile,
+  opacitiesRef,
+  index,
 }: {
   position: THREE.Vector3;
   name: string;
   phase: number;
   isMobile: boolean;
+  opacitiesRef: React.RefObject<Float32Array>;
+  index: number;
 }) {
   const [hovered, setHovered] = useState(false);
   const glowRef = useRef<THREE.Mesh>(null!);
@@ -422,10 +434,15 @@ function CityNode({
         <sphereGeometry args={[0.045, 8, 8]} />
         <meshBasicMaterial color="#A855F7" transparent opacity={0.12} />
       </mesh>
-      {!isMobile && <CityLabel name={name} />}
+      {!isMobile && <CityLabel name={name} opacitiesRef={opacitiesRef} index={index} />}
     </group>
   );
 }
+
+const TOP_N = 3;
+const LABEL_LERP = 0.08;
+const _wp = new THREE.Vector3();
+const _camDir = new THREE.Vector3();
 
 function CityNodes({ isMobile }: { isMobile: boolean }) {
   const data = useMemo(
@@ -438,10 +455,43 @@ function CityNodes({ isMobile }: { isMobile: boolean }) {
     [],
   );
 
+  /* Shared ref: per-city label opacity (0..1), written by useFrame below */
+  const opacitiesRef = useRef(new Float32Array(CITIES.length));
+  const { camera } = useThree();
+
+  /* Each frame: rank cities by dot product, fade top 3 in, rest out */
+  useFrame(() => {
+    _camDir.copy(camera.position).normalize();
+    const dots: { i: number; d: number }[] = [];
+
+    for (let i = 0; i < data.length; i++) {
+      _wp.copy(data[i].pos).normalize();
+      const d = _wp.dot(_camDir);
+      if (d > 0.3) dots.push({ i, d });
+    }
+
+    dots.sort((a, b) => b.d - a.d);
+    const topSet = new Set(dots.slice(0, TOP_N).map((x) => x.i));
+
+    const arr = opacitiesRef.current;
+    for (let i = 0; i < arr.length; i++) {
+      const target = topSet.has(i) ? 1 : 0;
+      arr[i] += (target - arr[i]) * LABEL_LERP;
+    }
+  });
+
   return (
     <>
       {data.map((d, i) => (
-        <CityNode key={`n-${i}`} position={d.pos} name={d.name} phase={d.phase} isMobile={isMobile} />
+        <CityNode
+          key={`n-${i}`}
+          position={d.pos}
+          name={d.name}
+          phase={d.phase}
+          isMobile={isMobile}
+          opacitiesRef={opacitiesRef}
+          index={i}
+        />
       ))}
     </>
   );
